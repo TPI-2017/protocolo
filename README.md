@@ -13,13 +13,15 @@ En notación C, cada mensaje tiene el formato:
 
 ~~~
 struct Message {
+	uint8_t version;
 	uint8_t type;
 	uint8_t size;
-	char content[254];
+	char content[253];
 }
 ~~~
+Message.version es un número que identifica la versión del protocolo, por si se hicieran cambios y se quiera mantener retrocompatibilidad.
 
-Message.type es un enumerativo que codifica el tipo de mensaje. Message.size indica el tamaño del mensaje, tiene rango [2, 255].
+Message.type es un enumerativo que codifica el tipo de mensaje. Message.size indica el tamaño del mensaje, tiene rango [3, 253].
 
 Un mensaje inválido se descarta y termina la conexión. (bajo TLS, no puede tratarse de corrupción, asi que es un cliente mal implementado o malicioso)
 
@@ -30,6 +32,18 @@ Los strings tienen un límite de longitud dado por el lugar remanente en el mens
 
 ## Procedimientos
 Cada procedimiento es un mensaje de pedido del cliente al servidor. Cada pedido se reconoce con una respuesta indicando éxito o error.
+
+La respuesta del servidor tiene el siguiente formato:
+
+struct ServerResponse {
+	int8_t ResponseCode;
+}
+
+ServerResponse puede tomar los siguientes valores:
+0: Respuesta genérica indicando éxito.
+-1: Error genérico.
+-2: Paquete inválido.
+-3: Paquete incompatible.
 
 ### Authenticate
 Cuando se inicia la conexión SSL, el cliente manda la password para entrar al sistema. El servidor responde con una respuesta de OK y la conexión permanece establecida hasta que el cliente decida cerrarla. (Cerrar la conexión SSL implica primero señalizar su fin, solo hacer FIN o RST se considera como una intrusión a la conexión y es detectable por ambas partes)
@@ -50,26 +64,19 @@ struct SetTextRequest {
 }
 ~~~
 
-### SetBitmap
-
-Descripción del contenido del mensaje:
-~~~
-struct SetBitmapRequest {
-	...
-}
-~~~
-
 ### SetAnimationParameters
 El cliente manda un pedido para setear los parámetros de animación.
 
 Descripción del contenido del mensaje:
 ~~~
 struct SetAnimParamsRequest {
-	ufp855 brate;
-	sfp855 srate;
+	ufp844 brate;
+	sfp844 srate;
 }
 ~~~
 
-MsgChangeBody.brate y MsgChange.srate son la frequencia de parpadeo en Hz y la velocidad de deslizamiento en píxeles por segundo.
+SetAnimParamsRequest.brate y SetAnimParamsRequest.srate son la frequencia de parpadeo en Hz y la velocidad de deslizamiento en píxeles por segundo.
 
-Se asume que si MsgChangeBody.brate es cero, no se debe parpadear el contenido. De la misma forma, si MsgChangeBody.srate es cero, no se debe deslizar el contenido.
+Se asume que si SetAnimParamsRequest.brate es cero, no se debe parpadear el contenido. De la misma forma, si SetAnimParamsRequest.srate es cero, no se debe deslizar el contenido.
+
+El tipo de dato ufp844 es un número en punto fijo sin signo con 4 bits de parte entera y 4 bits de parte fraccionaria. El tipo de dato sfp844 es lo mismo que ufp844 pero en complemento a dos.
