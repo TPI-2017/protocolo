@@ -44,12 +44,13 @@ ServerResponse puede tomar los siguientes valores:
 -1: Error genérico.
 -2: Paquete inválido.
 -3: Paquete incompatible.
+-4: Configuración de WiFi inválida.
 
 ### Authenticate
 Cuando se inicia la conexión SSL, el cliente manda la password para entrar al sistema. El servidor responde con una respuesta de OK y la conexión permanece establecida hasta que el cliente decida cerrarla. (Cerrar la conexión SSL implica primero señalizar su fin, solo hacer FIN o RST se considera como una intrusión a la conexión y es detectable por ambas partes)
 
 ### Disconnect
-El cliente señaliza que va a desconectar y luego desconecta. Esto se hace en la capa TLS asi que no existe un mensaje que se transfiera a nivel aplicación.
+El cliente señaliza que va a desconectar y luego desconecta. Esto se hace en la capa TLS así que no existe un mensaje que se transfiera a nivel aplicación.
 
 ### SetText
 El cliente manda un pedido de cambio de mensaje, con el nuevo mensaje.
@@ -59,10 +60,11 @@ El servidor responde con un OK o con un código de error.
 Descripción del contenido del mensaje:
 ~~~
 struct SetTextRequest {
-	uint8_t strLength;
 	char msg[strLength];
 }
 ~~~
+
+El campo msg es una cadena de caracteres terminada en cero.
 
 ### SetAnimationParameters
 El cliente manda un pedido para setear los parámetros de animación.
@@ -80,3 +82,18 @@ SetAnimParamsRequest.brate y SetAnimParamsRequest.srate son la frequencia de par
 Se asume que si SetAnimParamsRequest.brate es cero, no se debe parpadear el contenido. De la misma forma, si SetAnimParamsRequest.srate es cero, no se debe deslizar el contenido.
 
 El tipo de dato ufp844 es un número en punto fijo sin signo con 4 bits de parte entera y 4 bits de parte fraccionaria. El tipo de dato sfp844 es lo mismo que ufp844 pero en complemento a dos.
+
+### SetWifiConfiguration
+El cliente manda un pedido para que el cartel se conecte a otra red wifi. Para esto se le debe pasar el nombre de la red (SSID), y la contraseña de la red.
+
+Descripción del contenido del mensaje:
+~~~
+struct SetWifiConfigurationRequest {
+	char SSID[32];
+	char password[64];
+	uint8_t ip;
+	uint8_t subnet;
+}
+~~~
+
+SSID es el nombre de la red, password es la contraseña de la red, ip es la IP que va a tomar el cartel y subnet es la máscara de la subred.
