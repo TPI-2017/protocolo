@@ -30,30 +30,45 @@ Message.content tiene una estructura que depende de Message.type y se define par
 ### Strings
 Los strings tienen un límite de longitud dado por el lugar remanente en el mensaje y están codificados según el estándar ISO/IEC 8859-1:1998. Antes del contenido del string debe haber un byte que indique la longitud del string.
 
-## Procedimientos
-Cada procedimiento es un mensaje de pedido del cliente al servidor. Cada pedido se reconoce con una respuesta indicando éxito o error.
+## Establecimiento de conexión
+El establecimiento de una conexión está conformado por el establecimiento de una conexión TLS al servidor iniciada por el cliente, seguida de la interacción Authenticate. Si la interacción Authenticate fallase, el servidor debe cerrar la conexión inmediatamente.
 
-La respuesta del servidor tiene el siguiente formato:
+El acceso al servidor dura lo que dure la conexión; no debe mantenerse estado de autenticación fuera de una conexión.
+
+## Desconexión
+La desconexión es sólo la de TLS. Una desconexión a nivel TCP sin el procedimiento de desconexión de TLS se considera un error.
+
+## Interacciones
+Una interacción es una secuencia de dos mensajes: un mensaje de pedido y un mensaje de respuesta. Cada interacción está formada por un mensaje de pedido seguido por un mensaje de respuesta.
+Las interacciones posibles son:
+* Authenticate
+* SetText
+* SetAnimationParameters
+* SetWifiConfiguration
+* GetText
+* GetAnimationParameters
+* GetWifiConfiguration
+
+La respuesta proviniente del servidor tiene el siguiente formato:
 
 struct ServerResponse {
 	int8_t ResponseCode;
+	char response[252];
 }
 
-ServerResponse puede tomar los siguientes valores:
+ResponseCode puede tomar los siguientes valores:
 0: Respuesta genérica indicando éxito.
 -1: Error genérico.
 -2: Paquete inválido.
 -3: Paquete incompatible.
 -4: Configuración de WiFi inválida.
+El campo response es opcional, puede ser de tamaño nulo y su contenido depende de la interacción de la cual es respuesta. Se dice que una interacción tiene una respuesta vacía cuando el campo response está ausente. Toda interacción tiene respuesta vacía salvo que se indique lo contrario.
 
 ### Authenticate
 Cuando se inicia la conexión SSL, el cliente manda la password para entrar al sistema. El servidor responde con una respuesta de OK y la conexión permanece establecida hasta que el cliente decida cerrarla. (Cerrar la conexión SSL implica primero señalizar su fin, solo hacer FIN o RST se considera como una intrusión a la conexión y es detectable por ambas partes)
 
-### Disconnect
-El cliente señaliza que va a desconectar y luego desconecta. Esto se hace en la capa TLS así que no existe un mensaje que se transfiera a nivel aplicación.
-
 ### SetText
-El cliente manda un pedido de cambio de mensaje, con el nuevo mensaje.
+Actualiza el mensaje del cartel con el enviado en el pedido.
 
 El servidor responde con un OK o con un código de error.
 
@@ -67,7 +82,7 @@ struct SetTextRequest {
 El campo msg es una cadena de caracteres terminada en cero.
 
 ### SetAnimationParameters
-El cliente manda un pedido para setear los parámetros de animación.
+Actualiza la configuración de la animación del cartel.
 
 Descripción del contenido del mensaje:
 ~~~
@@ -84,7 +99,7 @@ Se asume que si SetAnimParamsRequest.brate es cero, no se debe parpadear el cont
 El tipo de dato ufp844 es un número en punto fijo sin signo con 4 bits de parte entera y 4 bits de parte fraccionaria. El tipo de dato sfp844 es lo mismo que ufp844 pero en complemento a dos.
 
 ### SetWifiConfiguration
-El cliente manda un pedido para que el cartel se conecte a otra red wifi. Para esto se le debe pasar el nombre de la red (SSID), y la contraseña de la red.
+Actualiza la configuración de WiFi del servidor. En caso de éxito, el servidor debe responder con el código de respuesta de éxito, luego debe cerrar la conexión y por último debe conectarse a la red indicada bajo la IP indicada. Si fallara en hacer eso, vuelve a la configuración anterior.
 
 Descripción del contenido del mensaje:
 ~~~
@@ -97,3 +112,15 @@ struct SetWifiConfigurationRequest {
 ~~~
 
 SSID es el nombre de la red, password es la contraseña de la red, ip es la IP que va a tomar el cartel y subnet es la máscara de la subred.
+
+### GetText
+Devuelve la estructura SetTextRequest con el mensaje actual del cartel.
+Siempre retorna código de éxito.
+
+### GetAnimationParameters
+Devuelve la estructura SetAnimationParameters con la configuración de animación actual del cartel.
+Siempre retorna código de éxito.
+
+### GetWifiConfiguration
+Devuelve la estructura SetWifiConfigurationRequest con los datos de la red a la que el cartel está conectado y la IP que tiene en ella.
+Siempre retorna código de éxito.
