@@ -10,7 +10,6 @@ Cada mensaje del protocolo es un paquete de tamaño variable, con un límite má
 Todos los valores numéricos se transmiten con orden de bytes Big-Endian.
 
 En notación C, cada mensaje tiene el formato:
-
 ~~~
 struct Message {
 	uint8_t version;
@@ -19,6 +18,7 @@ struct Message {
 	char content[253];
 }
 ~~~
+
 Message.version es un número que identifica la versión del protocolo, por si se hicieran cambios y se quiera mantener retrocompatibilidad.
 
 Message.type es un enumerativo que codifica el tipo de mensaje. Message.size indica el tamaño del mensaje, tiene rango [3, 253].
@@ -51,17 +51,20 @@ Las interacciones posibles son:
 
 La respuesta proviniente del servidor tiene el siguiente formato:
 
+~~~
 struct ServerResponse {
 	int8_t ResponseCode;
 	char response[252];
 }
+~~~
 
 ResponseCode puede tomar los siguientes valores:
-0: Respuesta genérica indicando éxito.
--1: Error genérico.
--2: Paquete inválido.
--3: Paquete incompatible.
--4: Configuración de WiFi inválida.
+* Respuesta genérica indicando éxito: 0
+* Error genérico: -1
+* Paquete inválido: -2
+* Paquete incompatible: -3
+* Configuración de WiFi inválida: -4
+
 El campo response es opcional, puede ser de tamaño nulo y su contenido depende de la interacción de la cual es respuesta. Se dice que una interacción tiene una respuesta vacía cuando el campo response está ausente. Toda interacción tiene respuesta vacía salvo que se indique lo contrario.
 
 ### Authenticate
