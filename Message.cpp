@@ -47,7 +47,7 @@ void Message::prepare()
 // Getters
 const char *Message::text() const
 {
-	#warning Not implemented.
+	return reinterpret_cast<BaseMessage*>(mRaw)->text.text;
 }
 
 const char *Message::wifiSSID() const

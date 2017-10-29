@@ -63,5 +63,5 @@ public:
 private:
 	Type mType;
 	uint8_t mSize;
-	char rawContent[256];
+	char mRaw[256];
 };
