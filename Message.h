@@ -65,4 +65,6 @@ private:
 	uint16_t mBufferDim;
 	char mRaw[BufferSize];
 	bool readyToSend = false;
+
+	void computeSize();
 };

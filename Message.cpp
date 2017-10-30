@@ -38,6 +38,15 @@ uint16_t static memcpy_s(void *dst,
 	return srcSize;
 }
 
+uint16_t static strnlen_s(const char *str, uint16_t maxSize)
+{
+	uint16_t length = 0;
+	while (*str && maxSize--)
+		length++;
+
+	return length;
+}
+
 struct Text {
 	char text[252];
 }__attribute__((packed));
@@ -231,3 +240,22 @@ uint16_t Message::addRawData(const void *raw, uint16_t dim)
 
 	return dim;
 }
+
+void Message::computeSize()
+{
+	switch (mType) {
+	Auth:
+	SetText:
+	GetText:
+		break;
+	SetAnimationParameters:
+	GetAnimationParameters:
+		break;
+	SetWifiConfig:
+	GetWifiConfig:
+		break;
+	Response:
+		break;
+	}
+}
+
