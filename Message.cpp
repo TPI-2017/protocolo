@@ -1,8 +1,17 @@
 #include "Message.h"
 #include <string.h>
 
+#if WIN32
+#include <winsock2.h>
+#elif POSIX
+#include <arpa/inet.h>
+#elif ESP
+#include "network.h"
+#else
+	#warning No endianness conversion functions
+#endif
 
-uint8_t strcpy_s(void *dst, const void *src, uint16_t dstSize)
+uint8_t static strcpy_s(void *dst, const void *src, uint16_t dstSize)
 {
 	const char *csrc = reinterpret_cast<const char*>(src);
 	char *cdst = reinterpret_cast<char*>(dst);
@@ -13,6 +22,20 @@ uint8_t strcpy_s(void *dst, const void *src, uint16_t dstSize)
 	}
 
 	return !dstSize && *csrc;
+}
+
+uint16_t static memcpy_s(void *dst,
+		uint16_t dstSize,
+		const void *src,
+		uint16_t srcSize)
+{
+	const char *csrc = reinterpret_cast<const char*>(src);
+	char *cdst = reinterpret_cast<char*>(dst);
+
+	while (dstSize-- && srcSize--)
+		*(cdst++) = *(csrc++);
+
+	return srcSize;
 }
 
 struct Text {
@@ -26,7 +49,7 @@ struct AnimParams {
 
 struct WifiConfig {
 	char SSID[64];
-	char password[64];
+	char password[32];
 	uint32_t ip;
 	uint32_t subnetMask;
 }__attribute__((packed));
@@ -40,6 +63,11 @@ struct ServerResponse {
 	};
 }__attribute__((packed));
 
+uint8_t const Message::HeaderSize = 3;
+uint8_t const Message::MinimumMessageSize = HeaderSize;
+uint8_t const Message::MaximumMessageSize = BufferSize - MinimumMessageSize;
+uint8_t const Message::SupportedProtocolVersion = 1;
+
 struct BaseMessage {
 	uint8_t version;
 	uint8_t type;
@@ -52,13 +80,138 @@ struct BaseMessage {
 	};
 }__attribute__((packed));
 
-Message::Message(const void *raw)
+Message::Message(Type type)
+: mType(type),
+  mBufferDim(0)
 {
 }
 
-Message::Message(Type type)
-: mType(type)
+Message::Message(const void *raw, uint16_t dim)
+: mBufferDim(dim)
 {
+	memcpy_s(mRaw, BufferSize, raw, dim);
+	const BaseMessage* base = reinterpret_cast<const BaseMessage*>(mRaw);
+	mType = static_cast<Type>(base->type);
+}
+
+const char *Message::text() const
+{
+	if (mType == SetText || mType == GetText)
+		return reinterpret_cast<const BaseMessage*>(mRaw)->text.text;
+	else
+		return nullptr;
+}
+
+void Message::setText(const char *text)
+{
+	if (mType == SetText)
+		strcpy_s(reinterpret_cast<BaseMessage*>(mRaw)->text.text, text, sizeof(Text));
+}
+
+const char *Message::wifiSSID() const
+{
+	if (mType == SetWifiConfig || mType == GetWifiConfig)
+		return reinterpret_cast<const BaseMessage*>(mRaw)->wifiConfig.SSID;
+	else
+		return nullptr;
+}
+
+void Message::setWifiSSID(const char *str)
+{
+	if (mType == SetWifiConfig)
+		strcpy_s(reinterpret_cast<BaseMessage*>(mRaw)->wifiConfig.SSID, str, 64);
+}
+
+const char *Message::wifiPassword() const
+{
+	if (mType == SetWifiConfig || mType == GetWifiConfig)
+		return reinterpret_cast<const BaseMessage*>(mRaw)->wifiConfig.password;
+	else
+		return nullptr;
+}
+
+void Message::setWifiPassword(const char *password)
+{
+	if (mType == SetWifiConfig)
+		strcpy_s(reinterpret_cast<BaseMessage*>(mRaw)->wifiConfig.password, password, 32);
+}
+
+uint32_t Message::wifiIP() const
+{
+	if (mType == SetWifiConfig || mType == GetWifiConfig)
+		return ntohl(reinterpret_cast<const BaseMessage*>(mRaw)->wifiConfig.ip);
+	else
+		return 0;
+}
+
+void Message::setWifiIP(uint32_t ip)
+{
+	if (mType == SetWifiConfig)
+		reinterpret_cast<BaseMessage*>(mRaw)->wifiConfig.ip = htonl(ip);
+}
+
+uint32_t Message::wifiSubnet() const
+{
+	if (mType == SetWifiConfig || mType == GetWifiConfig)
+		return ntohl(reinterpret_cast<const BaseMessage*>(mRaw)->wifiConfig.subnetMask);
+	else
+		return 0;
+}
+
+void Message::setWifiSubnet(uint32_t mask)
+{
+	if (mType == SetWifiConfig)
+		reinterpret_cast<BaseMessage*>(mRaw)->wifiConfig.subnetMask = htonl(mask);
+}
+
+uint8_t Message::blinkRate() const
+{
+	if (mType == SetAnimationParameters || mType == GetAnimationParameters)
+		return reinterpret_cast<const BaseMessage*>(mRaw)->animParams.brate;
+	else
+		return 0;
+}
+
+void Message::setBlinkRate(uint8_t brate)
+{
+	if (mType == SetAnimationParameters)
+		reinterpret_cast<BaseMessage*>(mRaw)->animParams.brate = brate;
+}
+
+uint8_t Message::slideRate() const
+{
+	if (mType == SetAnimationParameters || mType == GetAnimationParameters)
+		return reinterpret_cast<const BaseMessage*>(mRaw)->animParams.srate;
+	else
+		return 0;
+}
+
+void Message::setSlideRate(uint8_t srate)
+{
+	if (mType == SetAnimationParameters)
+		reinterpret_cast<BaseMessage*>(mRaw)->animParams.srate = srate;
+}
+
+const char *Message::password() const
+{
+	if (mType == Auth)
+		return reinterpret_cast<const BaseMessage*>(mRaw)->text.text;
+	else
+		return nullptr;
+}
+
+void Message::setPassword(const char *password)
+{
+	if (mType == Auth)
+		strcpy_s(reinterpret_cast<BaseMessage*>(mRaw)->text.text, password, sizeof(Text));
+}
+
+uint8_t Message::size() const
+{
+	if (mBufferDim < MinimumMessageSize)
+		return 0;
+	else
+		return reinterpret_cast<const BaseMessage*>(mRaw)->size;
 }
 
 void Message::prepare()
@@ -66,79 +219,15 @@ void Message::prepare()
 	#warning Not implemented.
 }
 
-// Getters
-const char *Message::text() const
+uint16_t Message::addRawData(const void *raw, uint16_t dim)
 {
-	return reinterpret_cast<const BaseMessage*>(mRaw)->text.text;
-}
+	if (dim > BufferSize)
+		return 0;
 
-const char *Message::wifiSSID() const
-{
-	return reinterpret_cast<const BaseMessage*>(mRaw)->wifiConfig.SSID;
-}
+	if (dim + mBufferDim > BufferSize)
+		dim -= mBufferDim;
 
-const char *Message::wifiPassword() const
-{
-	return reinterpret_cast<const BaseMessage*>(mRaw)->wifiConfig.password;
-}
+	memcpy_s(mRaw + mBufferDim, mBufferDim, raw, BufferSize);
 
-uint32_t Message::wifiIP() const
-{
-	return reinterpret_cast<const BaseMessage*>(mRaw)->wifiConfig.ip;
-}
-
-uint32_t Message::wifiSubnet() const
-{
-	return reinterpret_cast<const BaseMessage*>(mRaw)->wifiConfig.subnetMask;
-}
-
-uint8_t Message::blinkRate() const
-{
-	return reinterpret_cast<const BaseMessage*>(mRaw)->animParams.brate;
-}
-
-uint8_t Message::slideRate() const
-{
-	return reinterpret_cast<const BaseMessage*>(mRaw)->animParams.srate;
-}
-
-const char *Message::password() const
-{
-	return reinterpret_cast<const BaseMessage*>(mRaw)->text.text;
-}
-
-// Setters
-void Message::setWifiSSID(const char *str)
-{
-	strcpy_s(reinterpret_cast<BaseMessage*>(mRaw)->wifiConfig.SSID, static_cast<const void*>(str), 64);
-}
-
-void Message::setWifiPassword(const char *password)
-{
-	strcpy_s(reinterpret_cast<BaseMessage*>(mRaw)->wifiConfig.password, static_cast<const void*>(password), 32);
-}
-
-void Message::setWifiIP(uint32_t ip)
-{
-	reinterpret_cast<BaseMessage*>(mRaw)->wifiConfig.ip = ip;
-}
-
-void Message::setWifiSubnet(uint32_t mask)
-{
-	reinterpret_cast<BaseMessage*>(mRaw)->wifiConfig.subnetMask = mask;
-}
-
-void Message::setBlinkRate(uint8_t brate)
-{
-	reinterpret_cast<BaseMessage*>(mRaw)->animParams.brate = brate;
-}
-
-void Message::setSlideRate(uint8_t srate)
-{
-	reinterpret_cast<BaseMessage*>(mRaw)->animParams.srate = srate;
-}
-
-void Message::setPassword(const char *password)
-{
-	strcpy_s(reinterpret_cast<BaseMessage*>(mRaw)->text.text, static_cast<const void*>(password), sizeof(Text));
+	return dim;
 }
