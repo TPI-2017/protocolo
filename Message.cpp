@@ -1,7 +1,27 @@
 #include "Message.h"
+#include <string.h>
+
+
+uint8_t strcpy_s(void *dst, const void *src, uint16_t dstSize)
+{
+	const char *csrc = reinterpret_cast<const char*>(src);
+	char *cdst = reinterpret_cast<char*>(dst);
+
+	while (dstSize && *csrc) {
+		*(cdst++) = *(csrc++);
+		dstSize--;
+	}
+
+	return !dstSize && *csrc;
+}
 
 struct Text {
 	char text[252];
+}__attribute__((packed));
+
+struct AnimParams {
+	uint8_t brate;
+	uint8_t srate;
 }__attribute__((packed));
 
 struct WifiConfig {
@@ -16,6 +36,7 @@ struct ServerResponse {
 	union {
 		WifiConfig wifiConfig;
 		Text text;
+		AnimParams animParams;
 	};
 }__attribute__((packed));
 
@@ -26,6 +47,7 @@ struct BaseMessage {
 	union {
 		Text text;
 		WifiConfig wifiConfig;
+		AnimParams animParams;
 		ServerResponse response;
 	};
 }__attribute__((packed));
@@ -47,76 +69,76 @@ void Message::prepare()
 // Getters
 const char *Message::text() const
 {
-	return reinterpret_cast<BaseMessage*>(mRaw)->text.text;
+	return reinterpret_cast<const BaseMessage*>(mRaw)->text.text;
 }
 
 const char *Message::wifiSSID() const
 {
-	#warning Not implemented.
+	return reinterpret_cast<const BaseMessage*>(mRaw)->wifiConfig.SSID;
 }
 
 const char *Message::wifiPassword() const
 {
-	#warning Not implemented.
+	return reinterpret_cast<const BaseMessage*>(mRaw)->wifiConfig.password;
 }
 
 uint32_t Message::wifiIP() const
 {
-	#warning Not implemented.
+	return reinterpret_cast<const BaseMessage*>(mRaw)->wifiConfig.ip;
 }
 
 uint32_t Message::wifiSubnet() const
 {
-	#warning Not implemented.
+	return reinterpret_cast<const BaseMessage*>(mRaw)->wifiConfig.subnetMask;
 }
 
 uint8_t Message::blinkRate() const
 {
-	#warning Not implemented.
+	return reinterpret_cast<const BaseMessage*>(mRaw)->animParams.brate;
 }
 
 uint8_t Message::slideRate() const
 {
-	#warning Not implemented.
+	return reinterpret_cast<const BaseMessage*>(mRaw)->animParams.srate;
 }
 
 const char *Message::password() const
 {
-	#warning Not implemented.
+	return reinterpret_cast<const BaseMessage*>(mRaw)->text.text;
 }
 
 // Setters
-void setWifiSSID(const char *str)
+void Message::setWifiSSID(const char *str)
 {
-	#warning Not implemented.
+	strcpy_s(reinterpret_cast<BaseMessage*>(mRaw)->wifiConfig.SSID, static_cast<const void*>(str), 64);
 }
 
-void setWifiPassword(const char *password)
+void Message::setWifiPassword(const char *password)
 {
-	#warning Not implemented.
+	strcpy_s(reinterpret_cast<BaseMessage*>(mRaw)->wifiConfig.password, static_cast<const void*>(password), 32);
 }
 
-void setWifiIP(uint32_t ip)
+void Message::setWifiIP(uint32_t ip)
 {
-	#warning Not implemented.
+	reinterpret_cast<BaseMessage*>(mRaw)->wifiConfig.ip = ip;
 }
 
-void setWifiSubnet(uint32_t mask)
+void Message::setWifiSubnet(uint32_t mask)
 {
-	#warning Not implemented.
+	reinterpret_cast<BaseMessage*>(mRaw)->wifiConfig.subnetMask = mask;
 }
 
-void setBlinkRate(uint8_t brate)
+void Message::setBlinkRate(uint8_t brate)
 {
-	#warning Not implemented.
+	reinterpret_cast<BaseMessage*>(mRaw)->animParams.brate = brate;
 }
 
-void setSlideRate(uint8_t srate)
+void Message::setSlideRate(uint8_t srate)
 {
-	#warning Not implemented.
+	reinterpret_cast<BaseMessage*>(mRaw)->animParams.srate = srate;
 }
 
-void setPassword(const char *password)
+void Message::setPassword(const char *password)
 {
-	#warning Not implemented.
+	strcpy_s(reinterpret_cast<BaseMessage*>(mRaw)->text.text, static_cast<const void*>(password), sizeof(Text));
 }
