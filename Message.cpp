@@ -63,15 +63,6 @@ struct WifiConfig {
 	uint32_t subnetMask;
 }__attribute__((packed));
 
-struct ServerResponse {
-	uint8_t responseCode;
-	union {
-		WifiConfig wifiConfig;
-		Text text;
-		AnimParams animParams;
-	};
-}__attribute__((packed));
-
 uint8_t const Message::HeaderSize = 3;
 uint8_t const Message::MinimumMessageSize = HeaderSize;
 uint8_t const Message::MaximumMessageSize = BufferSize - MinimumMessageSize;
@@ -81,11 +72,11 @@ struct BaseMessage {
 	uint8_t version;
 	uint8_t type;
 	uint8_t size;
+	uint8_t responseCode;
 	union {
 		Text text;
 		WifiConfig wifiConfig;
 		AnimParams animParams;
-		ServerResponse response;
 	};
 }__attribute__((packed));
 
