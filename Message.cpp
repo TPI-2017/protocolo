@@ -94,6 +94,17 @@ Message::Message(const void *raw, uint16_t dim)
 	mType = static_cast<Type>(base->type);
 }
 
+void Message::setResponseCode(enum ResponseCode responseCode)
+{
+	reinterpret_cast<BaseMessage*>(mRaw)->responseCode = static_cast<uint8_t>(responseCode);
+}
+
+Message::ResponseCode Message::responseCode() const
+{
+
+	return static_cast<ResponseCode>(reinterpret_cast<const BaseMessage*>(mRaw)->responseCode);
+}
+
 const char *Message::text() const
 {
 	if (mType == SetText || mType == GetText)

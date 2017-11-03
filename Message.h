@@ -10,11 +10,11 @@ public:
 		SetWifiConfig,
 		GetText,
 		GetAnimationParameters,
-		GetWifiConfig,
-		Response
+		GetWifiConfig
 	};
 
-	enum Error {
+	enum ResponseCode {
+		Request = 1,
 		OK = 0,
 		Failure = -1,
 		MalformedPackage = -2,
@@ -24,6 +24,9 @@ public:
 
 	Message(Type type);
 	Message(const void *raw, uint16_t dim);
+
+	void setResponseCode(enum ResponseCode responseCode);
+	ResponseCode responseCode() const;
 
 	const char *text() const;
 	void setText(const char *text);
