@@ -1,4 +1,4 @@
-CXXFLAGS = -std=c++11 -O0 -Wall -DPOSIX
+CXXFLAGS = -std=c++11 -O0 -g -Wall -DPOSIX
 
 Message.o:
 

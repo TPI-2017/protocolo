@@ -41,7 +41,7 @@ uint16_t static memcpy_s(void *dst,
 uint16_t static strnlen_s(const char *str, uint16_t maxSize)
 {
 	uint16_t length = 0;
-	while (*str && maxSize--)
+	while (*(str++) && maxSize--)
 		length++;
 
 	return length;
@@ -92,6 +92,8 @@ Message::Message(const void *raw, uint16_t dim)
 	memcpy_s(mRaw, BufferSize, raw, dim);
 	const BaseMessage* base = reinterpret_cast<const BaseMessage*>(mRaw);
 	mType = static_cast<Type>(base->type);
+	if (dim >= HeaderSize)
+		mBufferDim = base->size + HeaderSize;
 }
 
 void Message::setResponseCode(enum ResponseCode responseCode)
@@ -246,21 +248,26 @@ uint16_t Message::addRawData(const void *raw, uint16_t dim)
 void Message::computeSize()
 {
 	BaseMessage *ptr = reinterpret_cast<BaseMessage*>(mRaw);
+	uint8_t size;
+
 	switch (mType) {
 	case Auth:
 	case SetText:
 	case GetText:
-		setSize(HeaderSize + strnlen_s(ptr->text.text, sizeof(Text)));
+		size = strnlen_s(ptr->text.text, sizeof(Text)) + 1;
 		break;
 	case SetAnimationParameters:
 	case GetAnimationParameters:
-		setSize(HeaderSize + sizeof(AnimParams));
+		size = sizeof(AnimParams);
 		break;
 	case SetWifiConfig:
 	case GetWifiConfig:
-		setSize(HeaderSize + sizeof(WifiConfig));
+		size = sizeof(WifiConfig);
 		break;
 	}
+	
+	setSize(size);
+	mBufferDim = HeaderSize + size;
 }
 
 void Message::setSize(uint8_t size)
