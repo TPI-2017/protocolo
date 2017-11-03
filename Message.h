@@ -67,6 +67,6 @@ private:
 	Type mType;
 	uint16_t mBufferDim;
 	char mRaw[BufferSize];
-
 	void computeSize();
+	void setSize(uint8_t size);
 };

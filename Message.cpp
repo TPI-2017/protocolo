@@ -63,7 +63,7 @@ struct WifiConfig {
 	uint32_t subnetMask;
 }__attribute__((packed));
 
-uint8_t const Message::HeaderSize = 3;
+uint8_t const Message::HeaderSize = 4;
 uint8_t const Message::MinimumMessageSize = HeaderSize;
 uint8_t const Message::MaximumMessageSize = BufferSize - MinimumMessageSize;
 uint8_t const Message::SupportedProtocolVersion = 1;
@@ -227,7 +227,7 @@ uint8_t Message::size() const
 
 void Message::prepare()
 {
-	#warning Not implemented.
+	computeSize();
 }
 
 uint16_t Message::addRawData(const void *raw, uint16_t dim)
@@ -245,19 +245,25 @@ uint16_t Message::addRawData(const void *raw, uint16_t dim)
 
 void Message::computeSize()
 {
+	BaseMessage *ptr = reinterpret_cast<BaseMessage*>(mRaw);
 	switch (mType) {
-	Auth:
-	SetText:
-	GetText:
+	case Auth:
+	case SetText:
+	case GetText:
+		setSize(HeaderSize + strnlen_s(ptr->text.text, sizeof(Text)));
 		break;
-	SetAnimationParameters:
-	GetAnimationParameters:
+	case SetAnimationParameters:
+	case GetAnimationParameters:
+		setSize(HeaderSize + sizeof(AnimParams));
 		break;
-	SetWifiConfig:
-	GetWifiConfig:
-		break;
-	Response:
+	case SetWifiConfig:
+	case GetWifiConfig:
+		setSize(HeaderSize + sizeof(WifiConfig));
 		break;
 	}
 }
 
+void Message::setSize(uint8_t size)
+{
+	reinterpret_cast<BaseMessage*>(mRaw)->size = size;
+}
