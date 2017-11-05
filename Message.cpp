@@ -15,11 +15,15 @@ uint8_t static strcpy_s(void *dst, const void *src, uint16_t dstSize)
 {
 	const char *csrc = reinterpret_cast<const char*>(src);
 	char *cdst = reinterpret_cast<char*>(dst);
+	if (dstSize)
+		dstSize--;
 
 	while (dstSize && *csrc) {
 		*(cdst++) = *(csrc++);
 		dstSize--;
 	}
+
+	*cdst = 0;
 
 	return !dstSize && *csrc;
 }
@@ -117,7 +121,7 @@ const char *Message::text() const
 
 void Message::setText(const char *text)
 {
-	if (mType == SetText)
+	if (mType == SetText || mType == GetText)
 		strcpy_s(reinterpret_cast<BaseMessage*>(mRaw)->text.text, text, sizeof(Text));
 }
 
@@ -131,7 +135,7 @@ const char *Message::wifiSSID() const
 
 void Message::setWifiSSID(const char *str)
 {
-	if (mType == SetWifiConfig)
+	if (mType == SetWifiConfig || mType == GetWifiConfig)
 		strcpy_s(reinterpret_cast<BaseMessage*>(mRaw)->wifiConfig.SSID, str, 64);
 }
 
@@ -145,7 +149,7 @@ const char *Message::wifiPassword() const
 
 void Message::setWifiPassword(const char *password)
 {
-	if (mType == SetWifiConfig)
+	if (mType == SetWifiConfig || mType == GetWifiConfig)
 		strcpy_s(reinterpret_cast<BaseMessage*>(mRaw)->wifiConfig.password, password, 32);
 }
 
@@ -159,7 +163,7 @@ uint32_t Message::wifiIP() const
 
 void Message::setWifiIP(uint32_t ip)
 {
-	if (mType == SetWifiConfig)
+	if (mType == SetWifiConfig || mType == GetWifiConfig)
 		reinterpret_cast<BaseMessage*>(mRaw)->wifiConfig.ip = htonl(ip);
 }
 
@@ -173,7 +177,7 @@ uint32_t Message::wifiSubnet() const
 
 void Message::setWifiSubnet(uint32_t mask)
 {
-	if (mType == SetWifiConfig)
+	if (mType == SetWifiConfig || mType == GetWifiConfig)
 		reinterpret_cast<BaseMessage*>(mRaw)->wifiConfig.subnetMask = htonl(mask);
 }
 
@@ -187,7 +191,7 @@ uint8_t Message::blinkRate() const
 
 void Message::setBlinkRate(uint8_t brate)
 {
-	if (mType == SetAnimationParameters)
+	if (mType == SetAnimationParameters || mType == GetAnimationParameters)
 		reinterpret_cast<BaseMessage*>(mRaw)->animParams.brate = brate;
 }
 
@@ -201,7 +205,7 @@ uint8_t Message::slideRate() const
 
 void Message::setSlideRate(uint8_t srate)
 {
-	if (mType == SetAnimationParameters)
+	if (mType == SetAnimationParameters || mType == GetAnimationParameters)
 		reinterpret_cast<BaseMessage*>(mRaw)->animParams.srate = srate;
 }
 
