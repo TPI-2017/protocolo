@@ -15,10 +15,14 @@ uint8_t static strcpy_s(void *dst, const void *src, uint16_t dstSize)
 {
 	const char *csrc = reinterpret_cast<const char*>(src);
 	char *cdst = reinterpret_cast<char*>(dst);
+
+	if (dst == nullptr)
+		return 0;
+
 	if (dstSize)
 		dstSize--;
 
-	while (dstSize && *csrc) {
+	while (dstSize && csrc != nullptr && *csrc) {
 		*(cdst++) = *(csrc++);
 		dstSize--;
 	}
@@ -36,7 +40,10 @@ uint16_t static memcpy_s(void *dst,
 	const char *csrc = reinterpret_cast<const char*>(src);
 	char *cdst = reinterpret_cast<char*>(dst);
 
-	while (dstSize-- && srcSize--)
+	if (!dst)
+		return 0;
+
+	while (dstSize-- && srcSize-- && src)
 		*(cdst++) = *(csrc++);
 
 	return srcSize;

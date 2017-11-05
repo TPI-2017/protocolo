@@ -3,6 +3,10 @@
 #include <cstring>
 #include "Message.h"
 
+static const char *testString = "Ut enim ad minima veniam";
+static const char *testSSID = "Lorem ipsum dolor sit amet, consectetur ";
+static const char *testWifiPassword = "TzBDmm1C7UxE2QyV5hru";
+
 void test1()
 {
 	/*
@@ -12,30 +16,30 @@ void test1()
 	{
 		Message msg(Message::SetText);
 		assert(msg.size() == 0);
-		msg.setText("Abc 123");
+		msg.setText(testString);
 		msg.prepare();
-		assert(msg.size() == 1 + strlen("Abc 123"));
-		assert(strcmp("Abc 123", msg.text()) == 0);
+		assert(msg.size() == 1 + strlen(testString));
+		assert(strcmp(testString, msg.text()) == 0);
 		assert(strcmp("Avc 123", msg.text()) != 0);
 	}
 
 	{
 		Message msg(Message::GetText);
 		assert(msg.size() == 0);
-		msg.setText("Abc 123");
+		msg.setText(testString);
 		msg.prepare();
-		assert(msg.size() == 1 + strlen("Abc 123"));
-		assert(strcmp("Abc 123", msg.text()) == 0);
+		assert(msg.size() == 1 + strlen(testString));
+		assert(strcmp(testString, msg.text()) == 0);
 		assert(strcmp("Avc 123", msg.text()) != 0);
 	}
 
 	{
 		Message msg(Message::Auth);
 		assert(msg.size() == 0);
-		msg.setPassword("Abc 123");
+		msg.setPassword(testString);
 		msg.prepare();
-		assert(msg.size() == 1 + strlen("Abc 123"));
-		assert(strcmp("Abc 123", msg.password()) == 0);
+		assert(msg.size() == 1 + strlen(testString));
+		assert(strcmp(testString, msg.password()) == 0);
 		assert(strcmp("Avc 123", msg.password()) != 0);
 	}
 
@@ -66,12 +70,12 @@ void test1()
 		assert(msg.size() == 0);
 		msg.prepare();
 		assert(msg.size() == 104);
-		msg.setWifiSSID("Abc 123");
-		msg.setWifiPassword("Xyz 789");
+		msg.setWifiSSID(testSSID);
+		msg.setWifiPassword(testWifiPassword);
 		msg.setWifiIP(0xC0A80001);
 		msg.setWifiSubnet(0xFFFFFF00);
-		assert(strcmp(msg.wifiSSID(), "Abc 123") == 0);
-		assert(strcmp(msg.wifiPassword(), "Xyz 789") == 0);
+		assert(strcmp(msg.wifiSSID(), testSSID) == 0);
+		assert(strcmp(msg.wifiPassword(), testWifiPassword) == 0);
 		assert(msg.wifiIP() == 0xC0A80001);
 		assert(msg.wifiSubnet() == 0xFFFFFF00);
 	}
@@ -166,12 +170,120 @@ void test3()
 	 * Acá probamos strings vacías.
 	 */
 
-	// std::cout << "Test 3 OK" << std::endl;
+	{
+		Message msg(Message::SetText);
+		msg.setText("");
+		msg.prepare();
+		// un string vacío ocupa un byte por el terminador
+		assert(msg.size() == 1);
+		assert(strcmp("", msg.text()) == 0);
+		assert(strcmp("not empty", msg.text()) != 0);
+	}
+
+	{
+		Message msg(Message::GetText);
+		msg.setText("");
+		msg.prepare();
+		assert(msg.size() == 1);
+		assert(strcmp("", msg.text()) == 0);
+		assert(strcmp("not empty", msg.text()) != 0);
+	}
+
+	{
+		Message msg(Message::Auth);
+		msg.setPassword("");
+		msg.prepare();
+		assert(msg.size() == 1);
+		assert(strcmp("", msg.password()) == 0);
+		assert(strcmp("not empty", msg.password()) != 0);
+	}
+
+	{
+		Message msg(Message::SetWifiConfig);
+		msg.setWifiSSID("");
+		msg.setWifiPassword("");
+		msg.prepare();
+		assert(msg.size() == 104);
+		assert(strcmp("", msg.wifiSSID()) == 0);
+		assert(strcmp("", msg.wifiPassword()) == 0);
+		assert(strcmp("not empty", msg.wifiSSID()) != 0);
+		assert(strcmp("not empty", msg.wifiPassword()) != 0);
+	}
+
+	{
+		Message msg(Message::GetWifiConfig);
+		msg.setWifiSSID("");
+		msg.setWifiPassword("");
+		msg.prepare();
+		assert(msg.size() == 104);
+		assert(strcmp("", msg.wifiSSID()) == 0);
+		assert(strcmp("", msg.wifiPassword()) == 0);
+		assert(strcmp("not empty", msg.wifiSSID()) != 0);
+		assert(strcmp("not empty", msg.wifiPassword()) != 0);
+	}
+	std::cout << "Test 3 OK" << std::endl;
 }
 
 void test4()
 {
+	/*
+	 * Acá probamos strings nulas. Deberían manejarse igual que strings 
+	 * vacías
+	 */
 
+	{
+		Message msg(Message::SetText);
+		msg.setText(nullptr);
+		msg.prepare();
+		// un string vacío ocupa un byte por el terminador
+		assert(msg.size() == 1);
+		assert(strcmp("", msg.text()) == 0);
+		assert(strcmp("not empty", msg.text()) != 0);
+	}
+
+	{
+		Message msg(Message::GetText);
+		msg.setText(nullptr);
+		msg.prepare();
+		assert(msg.size() == 1);
+		assert(strcmp("", msg.text()) == 0);
+		assert(strcmp("not empty", msg.text()) != 0);
+	}
+
+	{
+		Message msg(Message::Auth);
+		msg.setPassword(nullptr);
+		msg.prepare();
+		assert(msg.size() == 1);
+		assert(strcmp("", msg.password()) == 0);
+		assert(strcmp("not empty", msg.password()) != 0);
+	}
+
+	{
+		Message msg(Message::SetWifiConfig);
+		msg.setWifiSSID(nullptr);
+		msg.setWifiPassword(nullptr);
+		msg.prepare();
+		assert(msg.size() == 104);
+		assert(strcmp("", msg.wifiSSID()) == 0);
+		assert(strcmp("", msg.wifiPassword()) == 0);
+		assert(strcmp("not empty", msg.wifiSSID()) != 0);
+		assert(strcmp("not empty", msg.wifiPassword()) != 0);
+	}
+
+	{
+		Message msg(Message::GetWifiConfig);
+		msg.setWifiSSID(nullptr);
+		msg.setWifiPassword(nullptr);
+		msg.prepare();
+		assert(msg.size() == 104);
+		assert(strcmp("", msg.wifiSSID()) == 0);
+		assert(strcmp("", msg.wifiPassword()) == 0);
+		assert(strcmp("not empty", msg.wifiSSID()) != 0);
+		assert(strcmp("not empty", msg.wifiPassword()) != 0);
+	}
+
+	std::cout << "Test 4 OK" << std::endl;
 }
 
 int main()
