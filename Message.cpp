@@ -238,11 +238,6 @@ uint8_t Message::size() const
 		return reinterpret_cast<const BaseMessage*>(mRaw)->size;
 }
 
-void Message::prepare()
-{
-	computeSize();
-}
-
 uint16_t Message::addRawData(const void *raw, uint16_t dim)
 {
 	if (dim > BufferSize)
@@ -256,7 +251,7 @@ uint16_t Message::addRawData(const void *raw, uint16_t dim)
 	return dim;
 }
 
-void Message::computeSize()
+void Message::prepare()
 {
 	BaseMessage *ptr = reinterpret_cast<BaseMessage*>(mRaw);
 	uint8_t size;
@@ -274,6 +269,9 @@ void Message::computeSize()
 	case SetWifiConfig:
 	case GetWifiConfig:
 		size = sizeof(WifiConfig);
+		break;
+	default:
+		size = 0;
 		break;
 	}
 	
