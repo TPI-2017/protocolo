@@ -1,6 +1,8 @@
 #pragma once
 #include <stdint.h>
 
+class MessageTest;
+
 class Message {
 public:
 	enum Type {
@@ -14,20 +16,38 @@ public:
 		GetWifiConfig
 	};
 
-	enum ResponseCode {
+	enum StatusCode {
 		Request = 1,
-		OK = 0,
-		Failure = -1,
-		MalformedPackage = -2,
-		IncompatiblePackage = -3,
-		IllegalWiFiConfig = -4,
-		BadPassword = -5
+		ResponseOK = 0,
+		ResponseFailure = -1,
+		ResponseMalformedPackage = -2,
+		ResponseIncompatiblePackage = -3,
+		ResponseIllegalWiFiConfig = -4,
+		ResponseBadPassword = -5
 	};
 
 	Message(Type type);
 	Message(const void *raw, uint16_t dim);
 
-	ResponseCode responseCode() const;
+	// Requests
+	static Message createAuthRequest(const char *str);
+	static Message createSetTextRequest(const char *str);
+	static Message createGetTextRequest();
+	static Message createSetWifiConfigRequest(const char *ssid, const char* password, uint32_t ip, uint32_t mask);
+	static Message createGetWifiConfigRequest();
+	static Message createSetAnimationParametersRequest(uint8_t blinkRate, uint8_t slideRate);
+	static Message createGetAnimationParametersRequest();
+
+	// Responses
+	static Message createAuthResponse(StatusCode statusCode);
+	static Message createSetTextResponse(StatusCode statusCode);
+	static Message createGetTextResponse(StatusCode statusCode, const char *str);
+	static Message createSetWifiConfigResponse(StatusCode statusCode);
+	static Message createGetWifiConfigResponse(StatusCode statusCode, const char *ssid, const char* password, uint32_t ip, uint32_t mask);
+	static Message createSetAnimationParametersResponse(StatusCode statusCode);
+	static Message createGetAnimationParametersResponse(StatusCode statusCode, uint8_t blinkRate, uint8_t slideRate);
+
+	StatusCode statusCode() const;
 	const char *text() const;
 	const char *password() const;
 	const char *wifiSSID() const;
@@ -47,7 +67,7 @@ public:
 	static const uint8_t SupportedProtocolVersion;
 	static constexpr uint16_t BufferSize = 256;
 private:
-	void setResponseCode(enum ResponseCode responseCode);
+	void setStatusCode(enum StatusCode statusCode);
 	void setPassword(const char *password);
 	void setText(const char *text);
 	void setWifiIP(uint32_t ip);
@@ -62,4 +82,6 @@ private:
 	Type mType;
 	uint16_t mBufferDim;
 	char mRaw[BufferSize];
+
+	friend class MessageTest;
 };

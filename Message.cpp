@@ -83,7 +83,7 @@ struct BaseMessage {
 	uint8_t version;
 	uint8_t type;
 	uint8_t size;
-	uint8_t responseCode;
+	uint8_t statusCode;
 	union {
 		Text text;
 		WifiConfig wifiConfig;
@@ -107,15 +107,15 @@ Message::Message(const void *raw, uint16_t dim)
 		mBufferDim = base->size + HeaderSize;
 }
 
-void Message::setResponseCode(enum ResponseCode responseCode)
+void Message::setStatusCode(enum StatusCode statusCode)
 {
-	reinterpret_cast<BaseMessage*>(mRaw)->responseCode = static_cast<uint8_t>(responseCode);
+	reinterpret_cast<BaseMessage*>(mRaw)->statusCode = static_cast<uint8_t>(statusCode);
 }
 
-Message::ResponseCode Message::responseCode() const
+Message::StatusCode Message::statusCode() const
 {
 
-	return static_cast<ResponseCode>(reinterpret_cast<const BaseMessage*>(mRaw)->responseCode);
+	return static_cast<StatusCode>(reinterpret_cast<const BaseMessage*>(mRaw)->statusCode);
 }
 
 const char *Message::text() const
@@ -282,4 +282,113 @@ void Message::prepare()
 void Message::setSize(uint8_t size)
 {
 	reinterpret_cast<BaseMessage*>(mRaw)->size = size;
+}
+
+// Request
+Message Message::createAuthRequest(const char *str)
+{
+	Message msg(Auth);
+	msg.setText(str);
+	return msg;
+}
+
+Message Message::createSetTextRequest(const char *str)
+{
+	Message msg(SetText);
+	msg.setText(str);
+	return msg;
+}
+
+Message Message::createGetTextRequest()
+{
+	Message msg(GetText);
+	return msg;
+}
+
+Message Message::createSetWifiConfigRequest(const char *ssid, const char* password, uint32_t ip, uint32_t mask)
+{
+	Message msg(SetWifiConfig);
+	msg.setWifiSSID(ssid);
+	msg.setWifiPassword(password);
+	msg.setWifiIP(ip);
+	msg.setWifiSubnet(mask);
+	return msg;
+}
+
+Message Message::createGetWifiConfigRequest()
+{
+	Message msg(GetWifiConfig);
+	return msg;
+}
+
+Message Message::createSetAnimationParametersRequest(uint8_t blinkRate, uint8_t slideRate)
+{
+	Message msg(SetAnimationParameters);
+	msg.setBlinkRate(blinkRate);
+	msg.setSlideRate(slideRate);
+	return msg;
+}
+
+Message Message::createGetAnimationParametersRequest()
+{
+	Message msg(GetAnimationParameters);
+	return msg;
+}
+
+
+// Response
+Message Message::createAuthResponse(StatusCode statusCode)
+{
+	Message msg(Auth);
+	msg.setStatusCode(statusCode);
+	return msg;
+}
+
+Message Message::createSetTextResponse(StatusCode statusCode)
+{
+	Message msg(SetText);
+	msg.setStatusCode(statusCode);
+	return msg;
+}
+
+Message Message::createGetTextResponse(StatusCode statusCode, const char *str)
+{
+	Message msg(GetText);
+	msg.setStatusCode(statusCode);
+	msg.setText(str);
+	return msg;
+}
+
+Message Message::createSetWifiConfigResponse(StatusCode statusCode)
+{
+	Message msg(SetWifiConfig);
+	msg.setStatusCode(statusCode);
+	return msg;
+}
+
+Message Message::createGetWifiConfigResponse(StatusCode statusCode, const char *ssid, const char* password, uint32_t ip, uint32_t mask)
+{
+	Message msg(GetWifiConfig);
+	msg.setStatusCode(statusCode);
+	msg.setWifiSSID(ssid);
+	msg.setWifiPassword(password);
+	msg.setWifiIP(ip);
+	msg.setWifiSubnet(mask);
+	return msg;
+}
+
+Message Message::createSetAnimationParametersResponse(StatusCode statusCode)
+{
+	Message msg(SetAnimationParameters);
+	msg.setStatusCode(statusCode);
+	return msg;
+}
+
+Message Message::createGetAnimationParametersResponse(StatusCode statusCode, uint8_t blinkRate, uint8_t slideRate)
+{
+	Message msg(GetAnimationParameters);
+	msg.setStatusCode(statusCode);
+	msg.setBlinkRate(blinkRate);
+	msg.setSlideRate(slideRate);
+	return msg;
 }
