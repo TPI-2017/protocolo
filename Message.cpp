@@ -103,6 +103,7 @@ Message::Message(const void *raw, uint16_t dim)
 	memcpy_s(mRaw, BufferSize, raw, dim);
 	const BaseMessage* base = reinterpret_cast<const BaseMessage*>(mRaw);
 	mType = static_cast<Type>(base->type);
+	repair();
 }
 
 void Message::setStatusCode(enum StatusCode statusCode)
@@ -249,7 +250,7 @@ uint16_t Message::addRawData(const void *raw, uint16_t dim)
 	return dim;
 }
 
-void Message::prepare()
+void Message::updateSize()
 {
 	BaseMessage *ptr = reinterpret_cast<BaseMessage*>(mRaw);
 	uint8_t size;
@@ -287,6 +288,7 @@ Message Message::createAuthRequest(const char *str)
 {
 	Message msg(Auth);
 	msg.setText(str);
+	msg.updateSize();
 	return msg;
 }
 
@@ -294,12 +296,14 @@ Message Message::createSetTextRequest(const char *str)
 {
 	Message msg(SetText);
 	msg.setText(str);
+	msg.updateSize();
 	return msg;
 }
 
 Message Message::createGetTextRequest()
 {
 	Message msg(GetText);
+	msg.updateSize();
 	return msg;
 }
 
@@ -310,12 +314,14 @@ Message Message::createSetWifiConfigRequest(const char *ssid, const char* passwo
 	msg.setWifiPassword(password);
 	msg.setWifiIP(ip);
 	msg.setWifiSubnet(mask);
+	msg.updateSize();
 	return msg;
 }
 
 Message Message::createGetWifiConfigRequest()
 {
 	Message msg(GetWifiConfig);
+	msg.updateSize();
 	return msg;
 }
 
@@ -324,12 +330,14 @@ Message Message::createSetAnimationParametersRequest(uint8_t blinkRate, uint8_t 
 	Message msg(SetAnimationParameters);
 	msg.setBlinkRate(blinkRate);
 	msg.setSlideRate(slideRate);
+	msg.updateSize();
 	return msg;
 }
 
 Message Message::createGetAnimationParametersRequest()
 {
 	Message msg(GetAnimationParameters);
+	msg.updateSize();
 	return msg;
 }
 
@@ -339,6 +347,7 @@ Message Message::createAuthResponse(StatusCode statusCode)
 {
 	Message msg(Auth);
 	msg.setStatusCode(statusCode);
+	msg.updateSize();
 	return msg;
 }
 
@@ -346,6 +355,7 @@ Message Message::createSetTextResponse(StatusCode statusCode)
 {
 	Message msg(SetText);
 	msg.setStatusCode(statusCode);
+	msg.updateSize();
 	return msg;
 }
 
@@ -354,6 +364,7 @@ Message Message::createGetTextResponse(StatusCode statusCode, const char *str)
 	Message msg(GetText);
 	msg.setStatusCode(statusCode);
 	msg.setText(str);
+	msg.updateSize();
 	return msg;
 }
 
@@ -361,6 +372,7 @@ Message Message::createSetWifiConfigResponse(StatusCode statusCode)
 {
 	Message msg(SetWifiConfig);
 	msg.setStatusCode(statusCode);
+	msg.updateSize();
 	return msg;
 }
 
@@ -372,6 +384,7 @@ Message Message::createGetWifiConfigResponse(StatusCode statusCode, const char *
 	msg.setWifiPassword(password);
 	msg.setWifiIP(ip);
 	msg.setWifiSubnet(mask);
+	msg.updateSize();
 	return msg;
 }
 
@@ -379,6 +392,7 @@ Message Message::createSetAnimationParametersResponse(StatusCode statusCode)
 {
 	Message msg(SetAnimationParameters);
 	msg.setStatusCode(statusCode);
+	msg.updateSize();
 	return msg;
 }
 
@@ -388,11 +402,12 @@ Message Message::createGetAnimationParametersResponse(StatusCode statusCode, uin
 	msg.setStatusCode(statusCode);
 	msg.setBlinkRate(blinkRate);
 	msg.setSlideRate(slideRate);
+	msg.updateSize();
 	return msg;
 }
-
 
 void Message::repair()
 {
 	// TODO: ver que las strings esten terminadas en ceros, IP validas, etc
+
 }

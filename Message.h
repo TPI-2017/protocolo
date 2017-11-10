@@ -26,7 +26,6 @@ public:
 		ResponseBadPassword = -5
 	};
 
-	Message(Type type);
 	Message(const void *raw, uint16_t dim);
 
 	// Requests
@@ -67,6 +66,8 @@ public:
 	static const uint8_t SupportedProtocolVersion;
 	static constexpr uint16_t BufferSize = 256;
 private:
+	Message(Type type);
+
 	void setStatusCode(enum StatusCode statusCode);
 	void setPassword(const char *password);
 	void setText(const char *text);
@@ -77,7 +78,7 @@ private:
 	void setSlideRate(uint8_t srate);
 	void setBlinkRate(uint8_t brate);
 	void setSize(uint8_t size);
-	void prepare();
+	void updateSize();
 	void repair();
 
 	Type mType;
