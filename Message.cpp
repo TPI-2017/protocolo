@@ -58,6 +58,19 @@ uint16_t static strnlen_s(const char *str, uint16_t maxSize)
 	return length;
 }
 
+bool isStringValid(const char *str, uint8_t size)
+{
+	if (size)
+		size--;
+
+	while (*str && size) {
+		str++;
+		size--;
+	}
+
+	return !size && *str == 0;
+}
+
 struct Text {
 	char text[252];
 }__attribute__((packed));
@@ -283,6 +296,11 @@ void Message::setSize(uint8_t size)
 	reinterpret_cast<BaseMessage*>(mRaw)->size = size;
 }
 
+void Message::setType(Type type)
+{
+	reinterpret_cast<BaseMessage*>(mRaw)->type = type;
+}
+
 // Request
 Message Message::createAuthRequest(const char *str)
 {
@@ -408,6 +426,36 @@ Message Message::createGetAnimationParametersResponse(StatusCode statusCode, uin
 
 void Message::repair()
 {
-	// TODO: ver que las strings esten terminadas en ceros, IP validas, etc
+	const BaseMessage* base = reinterpret_cast<const BaseMessage*>(mRaw);
 
+	if (statusCode() == Request) {
+		switch (mType) {
+		case Auth:
+		case SetText:
+			if (!isStringValid(base->text.text, size()))
+				setType(NoType);
+			break;
+		case SetWifiConfig:
+			if (!isStringValid(base->wifiConfig.SSID, 64) || !isStringValid(base->wifiConfig.password, 32))
+				setType(NoType);
+			break;
+		case default:
+			break;
+		}
+	} else if (statusCode() == ResponseOK) {
+		switch (mType) {
+		case GetText:
+			if (!isStringValid(base->text.text, size()))
+				setType(NoType);
+			break;
+		case GetWifiConfig:
+			if (!isStringValid(base->wifiConfig.SSID, 64) || !isStringValid(base->wifiConfig.password, 32))
+				setType(NoType);
+			break;
+		case default:
+			break;
+		}
+	} else {
+
+	}
 }

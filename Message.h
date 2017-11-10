@@ -78,6 +78,7 @@ private:
 	void setSlideRate(uint8_t srate);
 	void setBlinkRate(uint8_t brate);
 	void setSize(uint8_t size);
+	void setType(Type type);
 	void updateSize();
 	void repair();
 
