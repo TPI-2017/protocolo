@@ -103,8 +103,6 @@ Message::Message(const void *raw, uint16_t dim)
 	memcpy_s(mRaw, BufferSize, raw, dim);
 	const BaseMessage* base = reinterpret_cast<const BaseMessage*>(mRaw);
 	mType = static_cast<Type>(base->type);
-	if (dim >= HeaderSize)
-		mBufferDim = base->size + HeaderSize;
 }
 
 void Message::setStatusCode(enum StatusCode statusCode)
@@ -391,4 +389,10 @@ Message Message::createGetAnimationParametersResponse(StatusCode statusCode, uin
 	msg.setBlinkRate(blinkRate);
 	msg.setSlideRate(slideRate);
 	return msg;
+}
+
+
+void Message::repair()
+{
+	// TODO: ver que las strings esten terminadas en ceros, IP validas, etc
 }

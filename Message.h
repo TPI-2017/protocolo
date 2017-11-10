@@ -78,6 +78,7 @@ private:
 	void setBlinkRate(uint8_t brate);
 	void setSize(uint8_t size);
 	void prepare();
+	void repair();
 
 	Type mType;
 	uint16_t mBufferDim;
