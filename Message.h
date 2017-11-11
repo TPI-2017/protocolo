@@ -1,99 +1,92 @@
 #pragma once
 #include <stdint.h>
 
-class MessageTest;
-
 class Message {
 public:
+
+	static constexpr uint8_t SupportedProtocolVersion = 1;
+	static constexpr uint8_t MESSAGE_SIZE = 256;
+	static constexpr uint8_t TEXT_SIZE = 200;
+	static constexpr uint8_t PASSWORD_SIZE = 200;
+	static constexpr uint8_t WIFI_SSID_SIZE = 32;
+	static constexpr uint8_t WIFI_PASSWORD_SIZE = 64;
+
 	enum Type {
-		First = 0,
-		NoType = 1,
+		OK = 1,
+		Invalid,
 		Auth,
-		SetText,
-		SetAnimationParameters,
-		SetWifiConfig,
 		GetText,
-		GetAnimationParameters,
-		GetWifiConfig,
-		Last
+		GetTextResponse,
+		SetText,
+		GetWiFiConfig,
+		GetWiFiConfigResponse,
+		SetWifiConfig,
+		SetPassword
 	};
 
-	enum StatusCode {
-		Lasty = 2,
-		Request = 1,
-		ResponseOK = 0,
-		ResponseFailure = -1,
-		ResponseMalformedPackage = -2,
-		ResponseIncompatiblePackage = -3,
-		ResponseIllegalWiFiConfig = -4,
-		ResponseBadPassword = -5,
-		Firsty = -6
+	enum ErrorCode {
+		//TODO para una posible actualización donde te indica el tipo de error.
 	};
 
-	enum HeaderStatus {
-		OK = 0,
-		Malformed = -1,
-		Incomplete = -2
-	};
-
-	Message(const void *raw, uint16_t dim);
-
+	// Los char * que se envían por parámetro deben tener un 0 dentro del rango
+	// correspondiente. Si no, se intentará colocar un 0 al inicio del campo.
+	// En caso de que no se pueda, el comportamiento es indefinido.
+	
 	// Requests
-	static Message createAuthRequest(const char *str);
-	static Message createSetTextRequest(const char *str);
+	static Message createAuthRequest(const char *password);
+	static Message createSetTextRequest(uint8_t blinkRate, uint8_t slideRate, const char *text);
 	static Message createGetTextRequest();
-	static Message createSetWifiConfigRequest(const char *ssid, const char* password, uint32_t ip, uint32_t mask);
+	static Message createSetWifiConfigRequest(const char *ssid, const char *password, uint32_t ip, uint32_t mask);
 	static Message createGetWifiConfigRequest();
-	static Message createSetAnimationParametersRequest(uint8_t blinkRate, uint8_t slideRate);
-	static Message createGetAnimationParametersRequest();
+	static Message createSetPasswordRequest(const char *password);
 
 	// Responses
-	static Message createAuthResponse(StatusCode statusCode);
-	static Message createSetTextResponse(StatusCode statusCode);
-	static Message createGetTextResponse(StatusCode statusCode, const char *str);
-	static Message createSetWifiConfigResponse(StatusCode statusCode);
-	static Message createGetWifiConfigResponse(StatusCode statusCode, const char *ssid, const char* password, uint32_t ip, uint32_t mask);
-	static Message createSetAnimationParametersResponse(StatusCode statusCode);
-	static Message createGetAnimationParametersResponse(StatusCode statusCode, uint8_t blinkRate, uint8_t slideRate);
-	static HeaderStatus getRemainingPayloadCount(const void *raw, uint16_t dimension, uint8_t &count);
+	static Message createOKResponse();
+	static Message createInvalidResponse(ErrorCode errorCode);
+	static Message createGetTextResponse(uint8_t blinkRate, uint8_t slideRate, const char *text);
+	static Message createGetWifiConfigResponse(const char *ssid, const char *wifiPassword, uint32_t ip, uint32_t mask);
 
-	StatusCode statusCode() const;
-	const char *text() const;
-	const char *password() const;
-	const char *wifiSSID() const;
-	const char *wifiPassword() const;
-	uint32_t wifiIP() const;
-	uint32_t wifiSubnet() const;
-	uint8_t blinkRate() const;
-	uint8_t slideRate() const;
-	uint8_t size() const;
-	Type type() const {return mType;};
+	// El parámetro rawData debe ser del tamaño del paquete. Si no, el
+	// comportamiento es indefinido. Si la información suministrada no
+	// corresponde con ningún tipo de paquete especificado en el protocolo
+	// entonces se devuelve un mensaje del tipo inválido.
+	static Message createMessage(const void *rawData);
 
-	static const uint8_t MinimumMessageSize;
-	static const uint8_t MaximumMessageSize;
-	static const uint8_t HeaderSize;
-	static const uint8_t SupportedProtocolVersion;
-	static constexpr uint16_t BufferSize = 256;
+	// Los métodos que devuelven char * contienen un 0 dentro del rango 
+	// en el que se encuentran sus valores.
+	uint8_t       version()      const;
+	Type          type()         const;
+	const char *  text()         const;
+	uint8_t       blinkRate()    const;
+	uint8_t       slideRate()    const;
+	const char *  wifiSSID()     const;
+	const char *  wifiPassword() const;
+	uint32_t 	  wifiIP()       const;
+	uint32_t      wifiSubnet()   const;
+	const char *  password()     const;
+	ErrorCode     errorCode()    const;
+
 private:
+
+	// El parámetro rawData debe ser del tamaño del paquete, si no, el 
+	// comportamiento es indefinido.
+	Message(const void *rawData);
 	Message(Type type);
-
-	void setStatusCode(enum StatusCode statusCode);
-	void setPassword(const char *password);
+	
+	// Las funciones que reciban un char * deben contener un 0 en el rango
+	// correspondiente. Caso contrario se intentará colocar un 0 al inicio del
+	// campo. Si no se puede, el comportamiento es indefinido.
 	void setText(const char *text);
-	void setWifiIP(uint32_t ip);
-	void setWifiPassword(const char *password);
-	void setWifiSSID(const char *str);
-	void setWifiSubnet(uint32_t mask);
-	void setSlideRate(uint8_t srate);
 	void setBlinkRate(uint8_t brate);
-	void setSize(uint8_t size);
-	void setType(Type type);
-	void updateSize();
-	void repair();
+	void setSlideRate(uint8_t srate);
+	void setWifiSSID(const char *str);
+	void setWifiPassword(const char *password);
+	void setWifiIP(uint32_t ip);
+	void setWifiSubnet(uint32_t mask);
+	void setPassword(const char *password);
+	void setErrorCode(ErrorCode errorCode);
 
-	Type mType;
-	uint16_t mBufferDim;
-	char mRaw[BufferSize];
+	const Type mType;
+	char mRaw[MESSAGE_SIZE];
 
-	friend class MessageTest;
 };
