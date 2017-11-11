@@ -94,9 +94,9 @@ uint8_t const Message::SupportedProtocolVersion = 1;
 
 struct BaseMessage {
 	uint8_t version;
-	uint8_t type;
+	int8_t type;
 	uint8_t size;
-	uint8_t statusCode;
+	int8_t statusCode;
 	union {
 		Text text;
 		WifiConfig wifiConfig;
@@ -248,19 +248,6 @@ uint8_t Message::size() const
 		return 0;
 	else
 		return reinterpret_cast<const BaseMessage*>(mRaw)->size;
-}
-
-uint16_t Message::addRawData(const void *raw, uint16_t dim)
-{
-	if (dim > BufferSize)
-		return 0;
-
-	if (dim + mBufferDim > BufferSize)
-		dim -= mBufferDim;
-
-	memcpy_s(mRaw + mBufferDim, mBufferDim, raw, BufferSize);
-
-	return dim;
 }
 
 void Message::updateSize()
@@ -439,7 +426,7 @@ void Message::repair()
 			if (!isStringValid(base->wifiConfig.SSID, 64) || !isStringValid(base->wifiConfig.password, 32))
 				setType(NoType);
 			break;
-		case default:
+		default:
 			break;
 		}
 	} else if (statusCode() == ResponseOK) {
@@ -452,10 +439,38 @@ void Message::repair()
 			if (!isStringValid(base->wifiConfig.SSID, 64) || !isStringValid(base->wifiConfig.password, 32))
 				setType(NoType);
 			break;
-		case default:
+		default:
 			break;
 		}
 	} else {
 
 	}
+}
+
+Message::HeaderStatus Message::getRemainingPayloadCount(const void *raw, uint16_t dimension, uint8_t &count)
+{
+	const BaseMessage* base = reinterpret_cast<const BaseMessage*>(raw);
+
+	if (dimension <= HeaderSize)
+		return Incomplete;
+
+	if (dimension > BufferSize)
+		return Incomplete;
+
+	if (base->version > SupportedProtocolVersion)
+		return Malformed;
+
+	if (base->type <= Type::First || base->type >= Type::Last)
+		return Malformed;
+
+	if (base->statusCode <= StatusCode::Firsty || base->statusCode >= StatusCode::Lasty)
+		return Malformed;
+
+	uint8_t size = base->size;
+	if (size > MaximumMessageSize)
+		return Malformed;
+	
+	
+	count = size - (dimension - HeaderSize);
+	return OK;
 }

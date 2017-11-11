@@ -6,24 +6,34 @@ class MessageTest;
 class Message {
 public:
 	enum Type {
-		NoType = 0,
+		First = 0,
+		NoType = 1,
 		Auth,
 		SetText,
 		SetAnimationParameters,
 		SetWifiConfig,
 		GetText,
 		GetAnimationParameters,
-		GetWifiConfig
+		GetWifiConfig,
+		Last
 	};
 
 	enum StatusCode {
+		Lasty = 2,
 		Request = 1,
 		ResponseOK = 0,
 		ResponseFailure = -1,
 		ResponseMalformedPackage = -2,
 		ResponseIncompatiblePackage = -3,
 		ResponseIllegalWiFiConfig = -4,
-		ResponseBadPassword = -5
+		ResponseBadPassword = -5,
+		Firsty = -6
+	};
+
+	enum HeaderStatus {
+		OK = 0,
+		Malformed = -1,
+		Incomplete = -2
 	};
 
 	Message(const void *raw, uint16_t dim);
@@ -45,6 +55,7 @@ public:
 	static Message createGetWifiConfigResponse(StatusCode statusCode, const char *ssid, const char* password, uint32_t ip, uint32_t mask);
 	static Message createSetAnimationParametersResponse(StatusCode statusCode);
 	static Message createGetAnimationParametersResponse(StatusCode statusCode, uint8_t blinkRate, uint8_t slideRate);
+	static HeaderStatus getRemainingPayloadCount(const void *raw, uint16_t dimension, uint8_t &count);
 
 	StatusCode statusCode() const;
 	const char *text() const;
@@ -57,8 +68,6 @@ public:
 	uint8_t slideRate() const;
 	uint8_t size() const;
 	Type type() const {return mType;};
-
-	uint16_t addRawData(const void *raw, uint16_t size);
 
 	static const uint8_t MinimumMessageSize;
 	static const uint8_t MaximumMessageSize;
