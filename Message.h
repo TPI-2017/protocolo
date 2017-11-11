@@ -5,11 +5,11 @@ class Message {
 public:
 
 	static constexpr uint8_t SUPPORTED_PROTOCOL_VERSION = 1;
-	static constexpr uint8_t MESSAGE_SIZE = 256;
-	static constexpr uint8_t TEXT_SIZE = 200;
-	static constexpr uint8_t PASSWORD_SIZE = 200;
-	static constexpr uint8_t WIFI_SSID_SIZE = 32;
-	static constexpr uint8_t WIFI_PASSWORD_SIZE = 64;
+	static const uint8_t MESSAGE_SIZE;
+	static const uint8_t TEXT_SIZE;
+	static const uint8_t PASSWORD_SIZE;
+	static const uint8_t WIFI_SSID_SIZE;
+	static const uint8_t WIFI_PASSWORD_SIZE;
 
 	enum Type {
 		OK = 1,
