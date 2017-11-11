@@ -5,7 +5,7 @@ class Message {
 public:
 
 	static constexpr uint8_t SUPPORTED_PROTOCOL_VERSION = 1;
-	static const uint8_t MESSAGE_SIZE;
+	static constexpr uint8_t MESSAGE_SIZE = 255;
 	static const uint8_t TEXT_SIZE;
 	static const uint8_t PASSWORD_SIZE;
 	static const uint8_t WIFI_SSID_SIZE;
@@ -25,7 +25,11 @@ public:
 	};
 
 	enum ErrorCode {
-		//TODO para una posible actualización donde te indica el tipo de error.
+		NoSupportedProtocol = 1,
+		InvalidSignature,
+		InvalidType,
+		InvalidErrorCode,
+		InvalidMessage
 	};
 
 	// Los char * que se envían por parámetro deben tener un 0 dentro del rango
@@ -84,6 +88,6 @@ private:
 	void setErrorCode(ErrorCode errorCode);
 
 	const Type mType;
-	char mRaw[MESSAGE_SIZE];
+	char mRaw[Message::MESSAGE_SIZE];
 
 };
