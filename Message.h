@@ -4,7 +4,7 @@
 class Message {
 public:
 
-	static constexpr uint8_t SupportedProtocolVersion = 1;
+	static constexpr uint8_t SUPPORTED_PROTOCOL_VERSION = 1;
 	static constexpr uint8_t MESSAGE_SIZE = 256;
 	static constexpr uint8_t TEXT_SIZE = 200;
 	static constexpr uint8_t PASSWORD_SIZE = 200;
@@ -20,7 +20,7 @@ public:
 		SetText,
 		GetWiFiConfig,
 		GetWiFiConfigResponse,
-		SetWifiConfig,
+		SetWiFiConfig,
 		SetPassword
 	};
 
@@ -36,7 +36,7 @@ public:
 	static Message createAuthRequest(const char *password);
 	static Message createSetTextRequest(uint8_t blinkRate, uint8_t slideRate, const char *text);
 	static Message createGetTextRequest();
-	static Message createSetWifiConfigRequest(const char *ssid, const char *password, uint32_t ip, uint32_t mask);
+	static Message createSetWifiConfigRequest(const char *ssid, const char *wifiPassword, uint32_t ip, uint32_t mask);
 	static Message createGetWifiConfigRequest();
 	static Message createSetPasswordRequest(const char *password);
 
@@ -44,7 +44,7 @@ public:
 	static Message createOKResponse();
 	static Message createInvalidResponse(ErrorCode errorCode);
 	static Message createGetTextResponse(uint8_t blinkRate, uint8_t slideRate, const char *text);
-	static Message createGetWifiConfigResponse(const char *ssid, const char *wifiPassword, uint32_t ip, uint32_t mask);
+	static Message createGetWiFiConfigResponse(const char *ssid, const char *wifiPassword, uint32_t ip, uint32_t mask);
 
 	// El parámetro rawData debe ser del tamaño del paquete. Si no, el
 	// comportamiento es indefinido. Si la información suministrada no
@@ -61,16 +61,13 @@ public:
 	uint8_t       slideRate()    const;
 	const char *  wifiSSID()     const;
 	const char *  wifiPassword() const;
-	uint32_t 	  wifiIP()       const;
+	uint32_t      wifiIP()       const;
 	uint32_t      wifiSubnet()   const;
 	const char *  password()     const;
 	ErrorCode     errorCode()    const;
 
 private:
 
-	// El parámetro rawData debe ser del tamaño del paquete, si no, el 
-	// comportamiento es indefinido.
-	Message(const void *rawData);
 	Message(Type type);
 	
 	// Las funciones que reciban un char * deben contener un 0 en el rango
@@ -79,10 +76,10 @@ private:
 	void setText(const char *text);
 	void setBlinkRate(uint8_t brate);
 	void setSlideRate(uint8_t srate);
-	void setWifiSSID(const char *str);
-	void setWifiPassword(const char *password);
-	void setWifiIP(uint32_t ip);
-	void setWifiSubnet(uint32_t mask);
+	void setWiFiSSID(const char *str);
+	void setWiFiPassword(const char *password);
+	void setWiFiIP(uint32_t ip);
+	void setWiFiSubnet(uint32_t mask);
 	void setPassword(const char *password);
 	void setErrorCode(ErrorCode errorCode);
 
