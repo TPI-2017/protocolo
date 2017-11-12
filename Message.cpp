@@ -25,8 +25,10 @@ bool static strcpy_s(void *dst, const void *src, uint8_t dstSize)
 	if (dstSize)
 		dstSize--;
 
-	while (*csrc && dstSize)
+	while (*csrc && dstSize) {
 		*(cdst++) = *(csrc++);
+		dstSize--;
+	}
 
 	error = *csrc;
 
