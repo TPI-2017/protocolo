@@ -94,7 +94,7 @@ private:
 	void setPassword(const char *password);
 	void setErrorCode(ErrorCode errorCode);
 
-	const Type mType;
+	Type mType;
 	char mRaw[Message::MESSAGE_SIZE];
 
 };
