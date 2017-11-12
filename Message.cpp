@@ -15,11 +15,25 @@
  * Realiza la copia desde el puntero src, hasta dst, indicando cuantos bytes se
  * quieren copiar. Mientras se realiza la copia, se busca en src un terminador 
  * 0. En caso de que no se encuentre se coloca en dst un terminador 0 al inicio.
- */ 
-void static strcpy_s(void *dst, const void *src, uint8_t dstSize)
+ */
+bool static strcpy_s(void *dst, const void *src, uint8_t dstSize)
 {
-	#warning No implementado.
-	//TODO tiene que hacer todo.
+	bool error;
+	const char *csrc = reinterpret_cast<const char*>(src);
+	char *cdst = reinterpret_cast<char*>(dst);
+
+	if (dstSize)
+		dstSize--;
+
+	while (*csrc && dstSize)
+		*(cdst++) = *(csrc++);
+
+	error = *csrc;
+
+	if (error)
+		reinterpret_cast<char*>(dst)[0] = '\0';
+
+	return error;
 }
 
 const uint8_t Message::TEXT_SIZE = 200;
@@ -59,6 +73,12 @@ struct BaseMessage {
 		Password password;
 	};
 }__attribute__((packed));
+
+Message::Message()
+: mType(Invalid)
+{
+	setErrorCode(NoError);
+}
 
 Message::Message(Type type)
 : mType(type)
@@ -139,6 +159,11 @@ const char *Message::wifiPassword() const
 		return nullptr;
 }
 
+const void *Message::data() const
+{
+	return mRaw;
+}
+
 void Message::setWiFiPassword(const char *password)
 {
 	if (mType == SetWiFiConfig || mType == GetWiFiConfigResponse)
@@ -199,7 +224,7 @@ void Message::setErrorCode(Message::ErrorCode errorCode)
 {
 	if (mType == Invalid) {
 		uint8_t errorSource = static_cast<uint8_t>(errorCode);
-		reinterpret_cast<const BaseMessage*>(mRaw)->error.errorCode = errorSource;
+		reinterpret_cast<BaseMessage*>(mRaw)->error.errorCode = errorSource;
 	}
 }
 
@@ -320,5 +345,4 @@ Message Message::createMessage(const void *rawData)
 	}
 
 	return createInvalidResponse(InvalidMessage);
-
 }

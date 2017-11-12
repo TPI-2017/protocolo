@@ -25,12 +25,18 @@ public:
 	};
 
 	enum ErrorCode {
-		NoSupportedProtocol = 1,
+		NoError = 0,
+		NoSupportedProtocol,
 		InvalidSignature,
 		InvalidType,
 		InvalidErrorCode,
 		InvalidMessage
 	};
+
+	// Constructor vacío que genera un mensaje de tipo Invalid con error
+	// NoError. Necesario para poder instanciar un mensaje que luego se
+	// sobreescriba.
+	Message();
 
 	// Los char * que se envían por parámetro deben tener un 0 dentro del rango
 	// correspondiente. Si no, se intentará colocar un 0 al inicio del campo.
@@ -69,6 +75,7 @@ public:
 	uint32_t      wifiSubnet()   const;
 	const char *  password()     const;
 	ErrorCode     errorCode()    const;
+	const void *  data()         const;
 
 private:
 
