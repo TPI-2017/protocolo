@@ -31,3 +31,6 @@ exec_test
 *.exe
 *.out
 *.app
+
+# VisualStudioCode
+*.vscode
