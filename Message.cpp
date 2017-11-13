@@ -34,17 +34,12 @@ void static strcpy_s(void *dst, const void *src, uint8_t dstSize)
 }
 
 
-// Expresiones estáticas. =====================================================
+// Constantes internas. =======================================================
 
-const uint8_t INTERNAL_TEXT_SIZE = 200;
-const uint8_t INTERNAL_PASSWORD_SIZE = 50;
-const uint8_t INTERNAL_WIFI_SSID_SIZE = 64;
-const uint8_t INTERNAL_WIFI_PASSWORD_SIZE = 32;
-
-const uint8_t Message::TEXT_SIZE = INTERNAL_TEXT_SIZE - 1;
-const uint8_t Message::PASSWORD_SIZE = INTERNAL_PASSWORD_SIZE - 1;
-const uint8_t Message::WIFI_SSID_SIZE = INTERNAL_WIFI_SSID_SIZE - 1;
-const uint8_t Message::WIFI_PASSWORD_SIZE = INTERNAL_PASSWORD_SIZE - 1;
+const uint8_t INTERNAL_TEXT_SIZE = Message::TEXT_SIZE + 1;
+const uint8_t INTERNAL_PASSWORD_SIZE = Message::PASSWORD_SIZE + 1;
+const uint8_t INTERNAL_WIFI_SSID_SIZE = Message::WIFI_SSID_SIZE + 1;
+const uint8_t INTERNAL_WIFI_PASSWORD_SIZE = Message::WIFI_PASSWORD_SIZE + 1;
 
 
 // Estructuras internas. ======================================================

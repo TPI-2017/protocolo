@@ -9,10 +9,10 @@ public:
 
 	// Estas constantes públicas definen el máximo tamaño de string sin incluir
 	// al terminador 0.
-	static const uint8_t TEXT_SIZE;
-	static const uint8_t PASSWORD_SIZE;
-	static const uint8_t WIFI_SSID_SIZE;
-	static const uint8_t WIFI_PASSWORD_SIZE;
+	static constexpr uint8_t TEXT_SIZE = 199;
+	static constexpr uint8_t PASSWORD_SIZE = 49;
+	static constexpr uint8_t WIFI_SSID_SIZE = 63;
+	static constexpr uint8_t WIFI_PASSWORD_SIZE = 31;
 
 	// Type viene determinado por un enumerativo cuyo valor
 	// representa el tipo de mensaje.
