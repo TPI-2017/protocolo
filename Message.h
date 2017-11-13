@@ -7,8 +7,8 @@ public:
 	static constexpr uint8_t SUPPORTED_PROTOCOL_VERSION = 1;
 	static constexpr uint16_t MESSAGE_SIZE = 256;
 
-	// Todas estas constantes públicas no incluyen al terminador 0 dentro de
-	// su campo.
+	// Estas constantes públicas definen el máximo tamaño de string sin incluir
+	// al terminador 0.
 	static const uint8_t TEXT_SIZE;
 	static const uint8_t PASSWORD_SIZE;
 	static const uint8_t WIFI_SSID_SIZE;
@@ -66,7 +66,8 @@ public:
 	// comportamiento es indefinido. Si el tamaño es el correspondiente y
 	// la información suministrada no corresponde con ningún tipo de paquete, 
 	// especificado en el protocolo, o si no tiene la firma válida, entonces
-	// se devuelve un mensaje de tipo vacío.
+	// se devuelve un mensaje de tipo vacío. En cualquier otro caso se arma el
+	// mensaje correspondiente.
 	static Message createMessage(const void *rawData);
 
 	// Los métodos que devuelven char * contienen un 0 dentro del rango en el
