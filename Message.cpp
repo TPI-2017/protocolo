@@ -1,6 +1,7 @@
 #include "Message.h"
 #include <string.h>
 
+
 #if WIN32
 	#include <winsock2.h>
 #elif POSIX
@@ -11,14 +12,12 @@
 	#warning No endianness conversion functions
 #endif
 
-/**
- * Realiza la copia desde el puntero src, hasta dst, indicando cuantos bytes se
- * quieren copiar. Mientras se realiza la copia, se busca en src un terminador 
- * 0. En caso de que no se encuentre se coloca en dst un terminador 0 al inicio.
- */
-bool static strcpy_s(void *dst, const void *src, uint8_t dstSize)
+
+// Realiza la copia desde el puntero src, hasta dst, indicando cuantos bytes se
+// quieren copiar. Mientras se realiza la copia, se busca en src un terminador 
+// 0. En caso de que no se encuentre se coloca en dst un terminador 0 al inicio.
+void static strcpy_s(void *dst, const void *src, uint8_t dstSize)
 {
-	bool error;
 	const char *csrc = reinterpret_cast<const char*>(src);
 	char *cdst = reinterpret_cast<char*>(dst);
 
@@ -30,61 +29,80 @@ bool static strcpy_s(void *dst, const void *src, uint8_t dstSize)
 		dstSize--;
 	}
 
-	error = *csrc;
-
-	if (error)
+	if (*csrc)
 		reinterpret_cast<char*>(dst)[0] = '\0';
-
-	return error;
 }
 
-const uint8_t Message::TEXT_SIZE = 200;
-const uint8_t Message::PASSWORD_SIZE = 200;
-const uint8_t Message::WIFI_SSID_SIZE = 64;
-const uint8_t Message::WIFI_PASSWORD_SIZE = 32;
 
-struct Text {
+// Expresiones estáticas. =====================================================
+
+const uint8_t INTERNAL_TEXT_SIZE = 200;
+const uint8_t INTERNAL_PASSWORD_SIZE = 50;
+const uint8_t INTERNAL_WIFI_SSID_SIZE = 64;
+const uint8_t INTERNAL_WIFI_PASSWORD_SIZE = 32;
+
+const uint8_t Message::TEXT_SIZE = INTERNAL_TEXT_SIZE - 1;
+const uint8_t Message::PASSWORD_SIZE = INTERNAL_PASSWORD_SIZE - 1;
+const uint8_t Message::WIFI_SSID_SIZE = INTERNAL_WIFI_SSID_SIZE - 1;
+const uint8_t Message::WIFI_PASSWORD_SIZE = INTERNAL_PASSWORD_SIZE - 1;
+
+
+// Estructuras internas. ======================================================
+
+struct text_t {
 	uint8_t brate;
 	uint8_t srate;
-	char text[Message::TEXT_SIZE];
+	char text[INTERNAL_TEXT_SIZE];
 }__attribute__((packed));
 
-struct WifiConfig {
-	char SSID[Message::WIFI_SSID_SIZE];
-	char password[Message::WIFI_PASSWORD_SIZE];
+struct wifiConfig_t {
+	char SSID[INTERNAL_WIFI_SSID_SIZE];
+	char password[INTERNAL_WIFI_PASSWORD_SIZE];
 	uint32_t ip;
 	uint32_t subnetMask;
 }__attribute__((packed));
 
-struct Error {
-	uint8_t errorCode;
+struct responseCode_t {
+	uint8_t responseCode;
 }__attribute__((packed));
 
-struct Password {
-	char password[Message::PASSWORD_SIZE];
+struct newPassword_t {
+	char newPassword[INTERNAL_PASSWORD_SIZE];
 }__attribute__((packed));
 
 struct BaseMessage {
 	uint8_t version = Message::SUPPORTED_PROTOCOL_VERSION;
 	uint8_t type;
 	uint8_t signature[4] = {'A', 'N', 'R', 'S'};
+	char password[INTERNAL_PASSWORD_SIZE];
 	union {
-		Text text;
-		WifiConfig wifiConfig;
-		Error error;
-		Password password;
+		text_t text;
+		wifiConfig_t wifiConfig;
+		responseCode_t resposeCode;
+		newPassword_t newPassword;
 	};
 }__attribute__((packed));
 
+
+// Constructores. =============================================================
+
 Message::Message()
-: mType(Invalid)
+: mEmpty(true)
 {
-	setErrorCode(NoError);
 }
 
 Message::Message(Type type)
-: mType(type)
+: mType(type),
+  mEmpty(false)
 {
+}
+
+
+// Getters. ===================================================================
+
+bool Message::empty() const
+{
+	return mEmpty;
 }
 
 uint8_t Message::version() const
@@ -97,18 +115,20 @@ Message::Type Message::type() const
 	return mType;
 }
 
-const char *Message::text() const
+const char *Message::password() const
 {
-	if (mType == GetTextResponse || mType == SetText)
-		return reinterpret_cast<const BaseMessage*>(mRaw)->text.text;
+	if (mType >= Auth && mType < GenericResponse)
+		return reinterpret_cast<const BaseMessage*>(mRaw)->password;
 	else
 		return nullptr;
 }
 
-void Message::setText(const char *text)
+const char *Message::newPassword() const
 {
-	if (mType == GetTextResponse || mType == SetText)
-		strcpy_s(reinterpret_cast<BaseMessage*>(mRaw)->text.text, text, Message::TEXT_SIZE);
+	if (mType == SetPassword)
+		return reinterpret_cast<const BaseMessage*>(mRaw)->newPassword.newPassword;
+	else
+		return nullptr;
 }
 
 uint8_t Message::blinkRate() const
@@ -119,12 +139,6 @@ uint8_t Message::blinkRate() const
 		return 0;
 }
 
-void Message::setBlinkRate(uint8_t brate)
-{
-	if (mType == GetTextResponse || mType == SetText)
-		reinterpret_cast<BaseMessage*>(mRaw)->text.brate = brate;
-}
-
 uint8_t Message::slideRate() const
 {
 	if (mType == GetTextResponse || mType == SetText)
@@ -133,10 +147,12 @@ uint8_t Message::slideRate() const
 		return 0;
 }
 
-void Message::setSlideRate(uint8_t srate)
+const char *Message::text() const
 {
 	if (mType == GetTextResponse || mType == SetText)
-		reinterpret_cast<BaseMessage*>(mRaw)->text.srate = srate;
+		return reinterpret_cast<const BaseMessage*>(mRaw)->text.text;
+	else
+		return nullptr;
 }
 
 const char *Message::wifiSSID() const
@@ -147,29 +163,12 @@ const char *Message::wifiSSID() const
 		return nullptr;
 }
 
-void Message::setWiFiSSID(const char *str)
-{
-	if (mType == SetWiFiConfig || mType == GetWiFiConfigResponse)
-		strcpy_s(reinterpret_cast<BaseMessage*>(mRaw)->wifiConfig.SSID, str, Message::WIFI_SSID_SIZE);
-}
-
 const char *Message::wifiPassword() const
 {
 	if (mType == SetWiFiConfig || mType == GetWiFiConfigResponse)
 		return reinterpret_cast<const BaseMessage*>(mRaw)->wifiConfig.password;
 	else
 		return nullptr;
-}
-
-const void *Message::data() const
-{
-	return mRaw;
-}
-
-void Message::setWiFiPassword(const char *password)
-{
-	if (mType == SetWiFiConfig || mType == GetWiFiConfigResponse)
-		strcpy_s(reinterpret_cast<BaseMessage*>(mRaw)->wifiConfig.password, password, Message::WIFI_SSID_SIZE);
 }
 
 uint32_t Message::wifiIP() const
@@ -180,12 +179,6 @@ uint32_t Message::wifiIP() const
 		return 0;
 }
 
-void Message::setWiFiIP(uint32_t ip)
-{
-	if (mType == SetWiFiConfig || mType == GetWiFiConfigResponse)
-		reinterpret_cast<BaseMessage*>(mRaw)->wifiConfig.ip = htonl(ip);
-}
-
 uint32_t Message::wifiSubnet() const
 {
 	if (mType == SetWiFiConfig || mType == GetWiFiConfigResponse)
@@ -194,43 +187,86 @@ uint32_t Message::wifiSubnet() const
 		return 0;
 }
 
+uint8_t Message::responseCode() const
+{
+	if (mType == GenericResponse)
+		return reinterpret_cast<const BaseMessage*>(mRaw)->resposeCode.responseCode;
+	else
+		return 0;
+}
+
+const void *Message::data() const
+{
+	return mRaw;
+}
+
+
+// Setters ====================================================================
+
+void Message::setPassword(const char *password)
+{
+	if (mType >= Auth && mType < GenericResponse)
+		strcpy_s(reinterpret_cast<BaseMessage*>(mRaw)->password, password, INTERNAL_PASSWORD_SIZE);
+}
+
+void Message::setNewPassword(const char *newPassword)
+{
+	if (mType == SetPassword)
+		strcpy_s(reinterpret_cast<BaseMessage*>(mRaw)->newPassword.newPassword, newPassword, INTERNAL_PASSWORD_SIZE);
+}
+
+void Message::setBlinkRate(uint8_t brate)
+{
+	if (mType == GetTextResponse || mType == SetText)
+		reinterpret_cast<BaseMessage*>(mRaw)->text.brate = brate;
+}
+
+void Message::setSlideRate(uint8_t srate)
+{
+	if (mType == GetTextResponse || mType == SetText)
+		reinterpret_cast<BaseMessage*>(mRaw)->text.srate = srate;
+}
+
+void Message::setText(const char *text)
+{
+	if (mType == GetTextResponse || mType == SetText)
+		strcpy_s(reinterpret_cast<BaseMessage*>(mRaw)->text.text, text, INTERNAL_TEXT_SIZE);
+}
+
+void Message::setWiFiSSID(const char *ssid)
+{
+	if (mType == SetWiFiConfig || mType == GetWiFiConfigResponse)
+		strcpy_s(reinterpret_cast<BaseMessage*>(mRaw)->wifiConfig.SSID, ssid, INTERNAL_WIFI_SSID_SIZE);
+}
+
+void Message::setWiFiPassword(const char *password)
+{
+	if (mType == SetWiFiConfig || mType == GetWiFiConfigResponse)
+		strcpy_s(reinterpret_cast<BaseMessage*>(mRaw)->wifiConfig.password, password, INTERNAL_WIFI_SSID_SIZE);
+}
+
+void Message::setWiFiIP(uint32_t ip)
+{
+	if (mType == SetWiFiConfig || mType == GetWiFiConfigResponse)
+		reinterpret_cast<BaseMessage*>(mRaw)->wifiConfig.ip = htonl(ip);
+}
+
 void Message::setWiFiSubnet(uint32_t mask)
 {
 	if (mType == SetWiFiConfig || mType == GetWiFiConfigResponse)
 		reinterpret_cast<BaseMessage*>(mRaw)->wifiConfig.subnetMask = htonl(mask);
 }
 
-const char *Message::password() const
+void Message::setResponseCode(uint8_t responseCode)
 {
-	if (mType == Auth)
-		return reinterpret_cast<const BaseMessage*>(mRaw)->password.password;
-	else
-		return nullptr;
-}
-
-void Message::setPassword(const char *password)
-{
-	if (mType == Auth)
-		strcpy_s(reinterpret_cast<BaseMessage*>(mRaw)->password.password, password, Message::PASSWORD_SIZE);
-}
-
-Message::ErrorCode Message::errorCode() const
-{
-	if (mType == Invalid)
-		return static_cast<ErrorCode>(reinterpret_cast<const BaseMessage*>(mRaw)->error.errorCode);
-	else
-		return static_cast<ErrorCode>(0);
-}
-
-void Message::setErrorCode(Message::ErrorCode errorCode)
-{
-	if (mType == Invalid) {
-		uint8_t errorSource = static_cast<uint8_t>(errorCode);
-		reinterpret_cast<BaseMessage*>(mRaw)->error.errorCode = errorSource;
+	if (mType == GenericResponse) {
+		reinterpret_cast<BaseMessage*>(mRaw)->resposeCode.responseCode = responseCode;
 	}
 }
 
-// Request
+
+// Request. ===================================================================
+
 Message Message::createAuthRequest(const char *password)
 {
 	Message msg(Auth);
@@ -238,24 +274,42 @@ Message Message::createAuthRequest(const char *password)
 	return msg;
 }
 
-Message Message::createSetTextRequest(uint8_t blinkRate, uint8_t slideRate, const char *text)
+Message Message::createSetPasswordRequest(const char *password, const char *newPassword)
+{
+	Message msg(SetPassword);
+	msg.setPassword(password);
+	msg.setNewPassword(newPassword);
+	return msg;
+}
+
+Message Message::createGetTextRequest(const char *password)
+{
+	Message msg(GetText);
+	msg.setPassword(password);
+	return msg;
+}
+
+Message Message::createSetTextRequest(const char *password, uint8_t blinkRate, uint8_t slideRate, const char *text)
 {
 	Message msg(SetText);
+	msg.setPassword(password);
 	msg.setBlinkRate(blinkRate);
 	msg.setSlideRate(slideRate);
 	msg.setText(text);
 	return msg;
 }
 
-Message Message::createGetTextRequest()
+Message Message::createGetWifiConfigRequest(const char *password)
 {
-	Message msg(GetText);
+	Message msg(GetWiFiConfig);
+	msg.setPassword(password);
 	return msg;
 }
 
-Message Message::createSetWifiConfigRequest(const char *ssid, const char* password, uint32_t ip, uint32_t mask)
+Message Message::createSetWifiConfigRequest(const char *password, const char *ssid, const char* wifiPassword, uint32_t ip, uint32_t mask)
 {
 	Message msg(SetWiFiConfig);
+	msg.setPassword(password);
 	msg.setWiFiSSID(ssid);
 	msg.setWiFiPassword(password);
 	msg.setWiFiIP(ip);
@@ -263,30 +317,13 @@ Message Message::createSetWifiConfigRequest(const char *ssid, const char* passwo
 	return msg;
 }
 
-Message Message::createGetWifiConfigRequest()
-{
-	Message msg(GetWiFiConfig);
-	return msg;
-}
 
-Message Message::createSetPasswordRequest(const char *password)
-{
-	Message msg(SetPassword);
-	msg.setPassword(password);
-	return msg;
-}
+// Response. ==================================================================
 
-// Response
-Message Message::createOKResponse()
+Message Message::createGenericResponse(uint8_t responseCode)
 {
-	Message msg(OK);
-	return msg;
-}
-
-Message Message::createInvalidResponse(ErrorCode errorCode)
-{
-	Message msg(Invalid);
-	msg.setErrorCode(errorCode);
+	Message msg(GenericResponse);
+	msg.setResponseCode(responseCode);
 	return msg;
 }
 
@@ -313,38 +350,31 @@ Message Message::createMessage(const void *rawData)
 {
 	const BaseMessage *base = reinterpret_cast<const BaseMessage*>(rawData);
 	
-	if (base->version < SUPPORTED_PROTOCOL_VERSION)
-		return createInvalidResponse(NoSupportedProtocol);
 	if (base->signature[0] != 'A' || base->signature[1] != 'N' || base->signature[2] != 'R' || base->signature[3] != 'S')
-		return createInvalidResponse(InvalidSignature);
-	if (base->type < OK || base->type > SetPassword)
-		return createInvalidResponse(InvalidType);
+		return Message();
+	if (base->type < Auth || base->type > GetWiFiConfigResponse)
+		return Message();
 	
 	switch(base->type) {
-		case OK:
-			return createOKResponse();
-		case Invalid:
-			if(base->error.errorCode < NoSupportedProtocol || base->error.errorCode > InvalidMessage)
-				return createInvalidResponse(InvalidErrorCode);
-			else
-				return createInvalidResponse(static_cast<const ErrorCode>(base->error.errorCode));
 		case Auth:
-			return createAuthRequest(base->password.password);
+			return createAuthRequest(base->password);
+		case SetPassword:
+			return createSetPasswordRequest(base->password, base->newPassword.newPassword);
 		case GetText:
-			return createGetTextRequest();
+			return createGetTextRequest(base->password);
+		case SetText:
+			return createSetTextRequest(base->password, base->text.brate, base->text.srate, base->text.text);
+		case GetWiFiConfig:
+			return createGetWifiConfigRequest(base->password);
+		case SetWiFiConfig:
+			return createSetWifiConfigRequest(base->password, base->wifiConfig.SSID, base->wifiConfig.password, base->wifiConfig.ip, base->wifiConfig.subnetMask);
+		case GenericResponse:
+			return createGenericResponse(base->resposeCode.responseCode);
 		case GetTextResponse:
 			return createGetTextResponse(base->text.brate, base->text.srate, base->text.text);
-		case SetText:
-			return createSetTextRequest(base->text.brate, base->text.srate, base->text.text);
-		case GetWiFiConfig:
-			return createGetWifiConfigRequest();
 		case GetWiFiConfigResponse:
 			return createGetWiFiConfigResponse(base->wifiConfig.SSID, base->wifiConfig.password, base->wifiConfig.ip, base->wifiConfig.subnetMask);
-		case SetWiFiConfig:
-			return createSetWifiConfigRequest(base->wifiConfig.SSID, base->wifiConfig.password, base->wifiConfig.ip, base->wifiConfig.subnetMask);
-		case SetPassword:
-			return createSetPasswordRequest(base->password.password);
 	}
 
-	return createInvalidResponse(InvalidMessage);
+	return Message();
 }
