@@ -7,7 +7,7 @@
 #elif POSIX
 	#include <arpa/inet.h>
 #elif ESP
-	#include "network.h"
+	#include "../network.h"
 #else
 	#warning No endianness conversion functions
 #endif
