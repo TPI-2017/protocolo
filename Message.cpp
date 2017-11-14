@@ -1,5 +1,5 @@
 #include "Message.h"
-#include <string.h>
+#include "../strings.h"
 
 
 #if WIN32
@@ -11,27 +11,6 @@
 #else
 	#warning No endianness conversion functions
 #endif
-
-
-// Realiza la copia desde el puntero src, hasta dst, indicando cuantos bytes se
-// quieren copiar. Mientras se realiza la copia, se busca en src un terminador 
-// 0. En caso de que no se encuentre se coloca en dst un terminador 0 al inicio.
-void static strcpy_s(void *dst, const void *src, uint8_t dstSize)
-{
-	const char *csrc = reinterpret_cast<const char*>(src);
-	char *cdst = reinterpret_cast<char*>(dst);
-
-	if (dstSize)
-		dstSize--;
-
-	while (*csrc && dstSize) {
-		*(cdst++) = *(csrc++);
-		dstSize--;
-	}
-
-	if (*csrc)
-		reinterpret_cast<char*>(dst)[0] = '\0';
-}
 
 
 // Constantes internas. =======================================================
