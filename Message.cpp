@@ -86,12 +86,12 @@ Message::Message()
 {
 }
 
-Message::Message(Type type)
+Message::Message(Type type, uint8_t version)
 : mType(type),
   mEmpty(false)
 {
 	BaseMessage *base = reinterpret_cast<BaseMessage*>(mRaw);
-	base->version = Message::SUPPORTED_PROTOCOL_VERSION;
+	base->version = version;
 	base->signature[0] = 'A';
 	base->signature[1] = 'N';
 	base->signature[2] = 'R';
@@ -269,31 +269,31 @@ void Message::setResponseCode(uint8_t responseCode)
 
 // Request. ===================================================================
 
-Message Message::createAuthRequest(const char *password)
+Message Message::createAuthRequest(const char *password, uint8_t version)
 {
-	Message msg(Auth);
+	Message msg(Auth, version);
 	msg.setPassword(password);
 	return msg;
 }
 
-Message Message::createSetPasswordRequest(const char *password, const char *newPassword)
+Message Message::createSetPasswordRequest(const char *password, const char *newPassword, uint8_t version)
 {
-	Message msg(SetPassword);
+	Message msg(SetPassword, version);
 	msg.setPassword(password);
 	msg.setNewPassword(newPassword);
 	return msg;
 }
 
-Message Message::createGetTextRequest(const char *password)
+Message Message::createGetTextRequest(const char *password, uint8_t version)
 {
-	Message msg(GetText);
+	Message msg(GetText, version);
 	msg.setPassword(password);
 	return msg;
 }
 
-Message Message::createSetTextRequest(const char *password, uint8_t blinkRate, uint8_t slideRate, const char *text)
+Message Message::createSetTextRequest(const char *password, uint8_t blinkRate, uint8_t slideRate, const char *text, uint8_t version)
 {
-	Message msg(SetText);
+	Message msg(SetText, version);
 	msg.setPassword(password);
 	msg.setBlinkRate(blinkRate);
 	msg.setSlideRate(slideRate);
@@ -301,16 +301,16 @@ Message Message::createSetTextRequest(const char *password, uint8_t blinkRate, u
 	return msg;
 }
 
-Message Message::createGetWifiConfigRequest(const char *password)
+Message Message::createGetWifiConfigRequest(const char *password, uint8_t version)
 {
-	Message msg(GetWiFiConfig);
+	Message msg(GetWiFiConfig, version);
 	msg.setPassword(password);
 	return msg;
 }
 
-Message Message::createSetWifiConfigRequest(const char *password, const char *ssid, const char* wifiPassword, uint32_t ip, uint32_t mask)
+Message Message::createSetWifiConfigRequest(const char *password, const char *ssid, const char* wifiPassword, uint32_t ip, uint32_t mask, uint8_t version)
 {
-	Message msg(SetWiFiConfig);
+	Message msg(SetWiFiConfig, version);
 	msg.setPassword(password);
 	msg.setWiFiSSID(ssid);
 	msg.setWiFiPassword(password);
@@ -322,25 +322,25 @@ Message Message::createSetWifiConfigRequest(const char *password, const char *ss
 
 // Response. ==================================================================
 
-Message Message::createGenericResponse(uint8_t responseCode)
+Message Message::createGenericResponse(uint8_t responseCode, uint8_t version)
 {
-	Message msg(GenericResponse);
+	Message msg(GenericResponse, version);
 	msg.setResponseCode(responseCode);
 	return msg;
 }
 
-Message Message::createGetTextResponse(uint8_t blinkRate, uint8_t slideRate, const char *text)
+Message Message::createGetTextResponse(uint8_t blinkRate, uint8_t slideRate, const char *text, uint8_t version)
 {
-	Message msg(GetTextResponse);
+	Message msg(GetTextResponse, version);
 	msg.setBlinkRate(blinkRate);
 	msg.setSlideRate(slideRate);
 	msg.setText(text);
 	return msg;
 }
 
-Message Message::createGetWiFiConfigResponse(const char *ssid, const char* password, uint32_t ip, uint32_t mask)
+Message Message::createGetWiFiConfigResponse(const char *ssid, const char* password, uint32_t ip, uint32_t mask, uint8_t version)
 {
-	Message msg(GetWiFiConfig);
+	Message msg(GetWiFiConfig, version);
 	msg.setWiFiSSID(ssid);
 	msg.setWiFiPassword(password);
 	msg.setWiFiIP(ip);
@@ -359,23 +359,23 @@ Message Message::createMessage(const void *rawData)
 	
 	switch(base->type) {
 		case Auth:
-			return createAuthRequest(base->password);
+			return createAuthRequest(base->password, base->version);
 		case SetPassword:
-			return createSetPasswordRequest(base->password, base->newPassword.newPassword);
+			return createSetPasswordRequest(base->password, base->newPassword.newPassword, base->version);
 		case GetText:
-			return createGetTextRequest(base->password);
+			return createGetTextRequest(base->password, base->version);
 		case SetText:
-			return createSetTextRequest(base->password, base->text.brate, base->text.srate, base->text.text);
+			return createSetTextRequest(base->password, base->text.brate, base->text.srate, base->text.text, base->version);
 		case GetWiFiConfig:
-			return createGetWifiConfigRequest(base->password);
+			return createGetWifiConfigRequest(base->password, base->version);
 		case SetWiFiConfig:
-			return createSetWifiConfigRequest(base->password, base->wifiConfig.SSID, base->wifiConfig.password, base->wifiConfig.ip, base->wifiConfig.subnetMask);
+			return createSetWifiConfigRequest(base->password, base->wifiConfig.SSID, base->wifiConfig.password, base->wifiConfig.ip, base->wifiConfig.subnetMask, base->version);
 		case GenericResponse:
-			return createGenericResponse(base->resposeCode.responseCode);
+			return createGenericResponse(base->resposeCode.responseCode, base->version);
 		case GetTextResponse:
-			return createGetTextResponse(base->text.brate, base->text.srate, base->text.text);
+			return createGetTextResponse(base->text.brate, base->text.srate, base->text.text, base->version);
 		case GetWiFiConfigResponse:
-			return createGetWiFiConfigResponse(base->wifiConfig.SSID, base->wifiConfig.password, base->wifiConfig.ip, base->wifiConfig.subnetMask);
+			return createGetWiFiConfigResponse(base->wifiConfig.SSID, base->wifiConfig.password, base->wifiConfig.ip, base->wifiConfig.subnetMask, base->version);
 	}
 
 	return Message();

@@ -50,17 +50,17 @@ public:
 	// Sin embargo, para los response, no. El campo password, queda sin usar.
 	
 	// Requests
-	static Message createAuthRequest(const char *password);
-	static Message createSetPasswordRequest(const char *password, const char *newPassword);
-	static Message createGetTextRequest(const char *password);
-	static Message createSetTextRequest(const char *password, uint8_t blinkRate, uint8_t slideRate, const char *text);
-	static Message createGetWifiConfigRequest(const char *password);
-	static Message createSetWifiConfigRequest(const char *password, const char *ssid, const char *wifiPassword, uint32_t ip, uint32_t mask);
+	static Message createAuthRequest(const char *password, uint8_t version = SUPPORTED_PROTOCOL_VERSION);
+	static Message createSetPasswordRequest(const char *password, const char *newPassword, uint8_t version = SUPPORTED_PROTOCOL_VERSION);
+	static Message createGetTextRequest(const char *password, uint8_t version = SUPPORTED_PROTOCOL_VERSION);
+	static Message createSetTextRequest(const char *password, uint8_t blinkRate, uint8_t slideRate, const char *text, uint8_t version = SUPPORTED_PROTOCOL_VERSION);
+	static Message createGetWifiConfigRequest(const char *password, uint8_t version = SUPPORTED_PROTOCOL_VERSION);
+	static Message createSetWifiConfigRequest(const char *password, const char *ssid, const char *wifiPassword, uint32_t ip, uint32_t mask, uint8_t version = SUPPORTED_PROTOCOL_VERSION);
 
 	// Responses
-	static Message createGenericResponse(uint8_t responseCode);
-	static Message createGetTextResponse(uint8_t blinkRate, uint8_t slideRate, const char *text);
-	static Message createGetWiFiConfigResponse(const char *ssid, const char *wifiPassword, uint32_t ip, uint32_t mask);
+	static Message createGenericResponse(uint8_t responseCode, uint8_t version = SUPPORTED_PROTOCOL_VERSION);
+	static Message createGetTextResponse(uint8_t blinkRate, uint8_t slideRate, const char *text, uint8_t version = SUPPORTED_PROTOCOL_VERSION);
+	static Message createGetWiFiConfigResponse(const char *ssid, const char *wifiPassword, uint32_t ip, uint32_t mask, uint8_t version = SUPPORTED_PROTOCOL_VERSION);
 
 	// El parámetro rawData debe ser del tamaño del paquete. Si no, el
 	// comportamiento es indefinido. Si el tamaño es el correspondiente y
@@ -97,7 +97,7 @@ private:
 
 	// Instancia un constructor con el tipo de mensaje indicado. Se utiliza
 	// para luego setearle los demás parámetros.
-	Message(Type type);
+	Message(Type type, uint8_t version = SUPPORTED_PROTOCOL_VERSION);
 	
 	// Las funciones que reciban un char * deben contener un 0 en el rango
 	// correspondiente. Caso contrario se intentará colocar un 0 al inicio del
