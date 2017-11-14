@@ -90,6 +90,13 @@ Message::Message(Type type)
 : mType(type),
   mEmpty(false)
 {
+	BaseMessage *base = reinterpret_cast<BaseMessage*>(mRaw);
+	base->version = Message::SUPPORTED_PROTOCOL_VERSION;
+	base->signature[0] = 'A';
+	base->signature[1] = 'N';
+	base->signature[2] = 'R';
+	base->signature[3] = 'S';
+	base->type = type;
 }
 
 
