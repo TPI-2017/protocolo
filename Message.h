@@ -34,9 +34,10 @@ public:
 	enum ResponseCodePosition {
 		OK = 0,
 		MalformedPacket = 1,
-		BadProtocolVersion = 2,
-		BadIP = 4,
-		BadSubnetMask = 8,
+		BadPassword = 2,
+		BadProtocolVersion = 4,
+		BadIP = 8,
+		BadSubnetMask = 16
 	};
 
 	// Constructor vacío que genera un mensaje vacío. Necesario para poder
