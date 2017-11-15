@@ -311,7 +311,7 @@ Message Message::createSetWifiConfigRequest(const char *password, const char *ss
 	Message msg(SetWiFiConfig, version);
 	msg.setPassword(password);
 	msg.setWiFiSSID(ssid);
-    msg.setWiFiPassword(wifiPassword);
+	msg.setWiFiPassword(wifiPassword);
 	msg.setWiFiIP(ip);
 	msg.setWiFiSubnet(mask);
 	return msg;
