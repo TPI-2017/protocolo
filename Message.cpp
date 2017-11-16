@@ -27,6 +27,8 @@ void static strcpy_s(void *dst, const void *src, uint8_t dstSize)
 		dstSize--;
 	}
 
+	*cdst = '\0';
+
 	if (*csrc)
 		reinterpret_cast<char*>(dst)[0] = '\0';
 }
@@ -242,7 +244,7 @@ void Message::setWiFiSSID(const char *ssid)
 void Message::setWiFiPassword(const char *password)
 {
 	if (mType == SetWiFiConfig || mType == GetWiFiConfigResponse)
-		strcpy_s(reinterpret_cast<BaseMessage*>(mRaw)->wifiConfig.password, password, INTERNAL_WIFI_SSID_SIZE);
+		strcpy_s(reinterpret_cast<BaseMessage*>(mRaw)->wifiConfig.password, password, INTERNAL_WIFI_PASSWORD_SIZE);
 }
 
 void Message::setWiFiIP(uint32_t ip)
