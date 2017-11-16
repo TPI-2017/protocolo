@@ -369,13 +369,13 @@ Message Message::createMessage(const void *rawData)
 		case GetWiFiConfig:
 			return createGetWifiConfigRequest(base->password, base->version);
 		case SetWiFiConfig:
-			return createSetWifiConfigRequest(base->password, base->wifiConfig.SSID, base->wifiConfig.password, base->wifiConfig.ip, base->wifiConfig.subnetMask, base->version);
+			return createSetWifiConfigRequest(base->password, base->wifiConfig.SSID, base->wifiConfig.password, ntohl(base->wifiConfig.ip), ntohl(base->wifiConfig.subnetMask), base->version);
 		case GenericResponse:
 			return createGenericResponse(base->resposeCode.responseCode, base->version);
 		case GetTextResponse:
 			return createGetTextResponse(base->text.brate, base->text.srate, base->text.text, base->version);
 		case GetWiFiConfigResponse:
-			return createGetWiFiConfigResponse(base->wifiConfig.SSID, base->wifiConfig.password, base->wifiConfig.ip, base->wifiConfig.subnetMask, base->version);
+			return createGetWiFiConfigResponse(base->wifiConfig.SSID, base->wifiConfig.password, ntohl(base->wifiConfig.ip), ntohl(base->wifiConfig.subnetMask), base->version);
 	}
 
 	return Message();
