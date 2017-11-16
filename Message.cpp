@@ -54,7 +54,7 @@ struct BaseMessage {
 	union {
 		text_t text;
 		wifiConfig_t wifiConfig;
-		responseCode_t resposeCode;
+		responseCode_t responseCode;
 		newPassword_t newPassword;
 	};
 }__attribute__((packed));
@@ -173,7 +173,7 @@ uint32_t Message::wifiSubnet() const
 uint8_t Message::responseCode() const
 {
 	if (mType == GenericResponse)
-		return reinterpret_cast<const BaseMessage*>(mRaw)->resposeCode.responseCode;
+		return reinterpret_cast<const BaseMessage*>(mRaw)->responseCode.responseCode;
 	else
 		return 0;
 }
@@ -189,13 +189,13 @@ const void *Message::data() const
 void Message::setPassword(const char *password)
 {
 	if (mType >= Auth && mType < GenericResponse)
-		strcpy_s(reinterpret_cast<BaseMessage*>(mRaw)->password, password, INTERNAL_PASSWORD_SIZE);
+		strcpy_s(reinterpret_cast<BaseMessage*>(mRaw)->password, INTERNAL_PASSWORD_SIZE, password);
 }
 
 void Message::setNewPassword(const char *newPassword)
 {
 	if (mType == SetPassword)
-		strcpy_s(reinterpret_cast<BaseMessage*>(mRaw)->newPassword.newPassword, newPassword, INTERNAL_PASSWORD_SIZE);
+		strcpy_s(reinterpret_cast<BaseMessage*>(mRaw)->newPassword.newPassword, INTERNAL_PASSWORD_SIZE, newPassword);
 }
 
 void Message::setBlinkRate(uint8_t brate)
@@ -213,19 +213,19 @@ void Message::setSlideRate(uint8_t srate)
 void Message::setText(const char *text)
 {
 	if (mType == GetTextResponse || mType == SetText)
-		strcpy_s(reinterpret_cast<BaseMessage*>(mRaw)->text.text, text, INTERNAL_TEXT_SIZE);
+		strcpy_s(reinterpret_cast<BaseMessage*>(mRaw)->text.text, INTERNAL_TEXT_SIZE, text);
 }
 
 void Message::setWiFiSSID(const char *ssid)
 {
 	if (mType == SetWiFiConfig || mType == GetWiFiConfigResponse)
-		strcpy_s(reinterpret_cast<BaseMessage*>(mRaw)->wifiConfig.SSID, ssid, INTERNAL_WIFI_SSID_SIZE);
+		strcpy_s(reinterpret_cast<BaseMessage*>(mRaw)->wifiConfig.SSID, INTERNAL_WIFI_SSID_SIZE, ssid);
 }
 
 void Message::setWiFiPassword(const char *password)
 {
 	if (mType == SetWiFiConfig || mType == GetWiFiConfigResponse)
-		strcpy_s(reinterpret_cast<BaseMessage*>(mRaw)->wifiConfig.password, password, INTERNAL_WIFI_PASSWORD_SIZE);
+		strcpy_s(reinterpret_cast<BaseMessage*>(mRaw)->wifiConfig.password, INTERNAL_WIFI_PASSWORD_SIZE, password);
 }
 
 void Message::setWiFiIP(uint32_t ip)
@@ -243,7 +243,7 @@ void Message::setWiFiSubnet(uint32_t mask)
 void Message::setResponseCode(uint8_t responseCode)
 {
 	if (mType == GenericResponse) {
-		reinterpret_cast<BaseMessage*>(mRaw)->resposeCode.responseCode = responseCode;
+		reinterpret_cast<BaseMessage*>(mRaw)->responseCode.responseCode = responseCode;
 	}
 }
 
@@ -352,7 +352,7 @@ Message Message::createMessage(const void *rawData)
 		case SetWiFiConfig:
 			return createSetWifiConfigRequest(base->password, base->wifiConfig.SSID, base->wifiConfig.password, ntohl(base->wifiConfig.ip), ntohl(base->wifiConfig.subnetMask), base->version);
 		case GenericResponse:
-			return createGenericResponse(base->resposeCode.responseCode, base->version);
+			return createGenericResponse(base->responseCode.responseCode, base->version);
 		case GetTextResponse:
 			return createGetTextResponse(base->text.brate, base->text.srate, base->text.text, base->version);
 		case GetWiFiConfigResponse:
