@@ -340,7 +340,7 @@ Message Message::createGetTextResponse(uint8_t blinkRate, uint8_t slideRate, con
 
 Message Message::createGetWiFiConfigResponse(const char *ssid, const char* password, uint32_t ip, uint32_t mask, uint8_t version)
 {
-	Message msg(GetWiFiConfig, version);
+	Message msg(GetWiFiConfigResponse, version);
 	msg.setWiFiSSID(ssid);
 	msg.setWiFiPassword(password);
 	msg.setWiFiIP(ip);
