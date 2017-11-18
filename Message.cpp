@@ -6,7 +6,13 @@
 #elif POSIX
 	#include <arpa/inet.h>
 	#include <string.h>
+
+#if LINUX
+	#define strcpy_s(dest, dmax, src) strncpy(dest, src, dmax)
+#elif BSD
 	#define strcpy_s(dest, dmax, src) strlcpy(dest, src, dmax)
+#endif
+
 #elif ESP
 	#include "../network.h"
 	#include "../strings.h"
