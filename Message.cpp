@@ -3,16 +3,15 @@
 #if WIN32
 	#include <winsock2.h>
 	#include <string.h>
-#elif POSIX
+#elif LINUX
 	#include <arpa/inet.h>
 	#include <string.h>
-
-#if LINUX
-	#define strcpy_s(dest, dmax, src) strncpy(dest, src, dmax)
-#elif BSD
+	#include <bsd/string.h>
 	#define strcpy_s(dest, dmax, src) strlcpy(dest, src, dmax)
-#endif
-
+#elif BSD
+	#include <arpa/inet.h>
+	#include <string.h>
+	#define strcpy_s(dest, dmax, src) strlcpy(dest, src, dmax)
 #elif ESP
 	#include "../network.h"
 	#include "../strings.h"
