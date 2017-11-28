@@ -6,7 +6,16 @@
 #elif LINUX
 	#include <arpa/inet.h>
 	#include <string.h>
-	#include <bsd/string.h>
+	// En GNU no hay strlcpy, con lo que necesitamos uno en base a strncpy que
+	// está en el estándar C99.
+	size_t strlcpy(char *dst, const	char *src, size_t dstSize)
+	{
+		if (!dstSize)
+			return 1;
+		strncpy(dst, src, dstSize);
+		if (dst[dstSize - 1])
+			dst[0] = 0;
+	}
 	#define strcpy_s(dest, dmax, src) strlcpy(dest, src, dmax)
 #elif BSD
 	#include <arpa/inet.h>
