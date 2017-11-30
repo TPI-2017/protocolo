@@ -73,6 +73,8 @@ struct BaseMessage {
 	};
 }__attribute__((packed));
 
+static_assert(sizeof(BaseMessage) <= Message::MESSAGE_SIZE, "Tamaño incorrecto del paquete.");
+
 
 // Constructores. =============================================================
 
