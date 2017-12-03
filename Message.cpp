@@ -41,7 +41,7 @@ const uint8_t INTERNAL_WIFI_PASSWORD_SIZE = Message::WIFI_PASSWORD_SIZE + 1;
 
 struct text_t {
 	uint8_t brate;
-	uint8_t srate;
+	int8_t srate;
 	char text[INTERNAL_TEXT_SIZE];
 }__attribute__((packed));
 
@@ -138,7 +138,7 @@ uint8_t Message::blinkRate() const
 		return 0;
 }
 
-uint8_t Message::slideRate() const
+int8_t Message::slideRate() const
 {
 	if (mType == GetTextResponse || mType == SetText)
 		return reinterpret_cast<const BaseMessage*>(mRaw)->text.srate;
@@ -220,7 +220,7 @@ void Message::setBlinkRate(uint8_t brate)
 		reinterpret_cast<BaseMessage*>(mRaw)->text.brate = brate;
 }
 
-void Message::setSlideRate(uint8_t srate)
+void Message::setSlideRate(int8_t srate)
 {
 	if (mType == GetTextResponse || mType == SetText)
 		reinterpret_cast<BaseMessage*>(mRaw)->text.srate = srate;
@@ -288,7 +288,7 @@ Message Message::createGetTextRequest(const char *password, uint8_t version)
 	return msg;
 }
 
-Message Message::createSetTextRequest(const char *password, uint8_t blinkRate, uint8_t slideRate, const char *text, uint8_t version)
+Message Message::createSetTextRequest(const char *password, uint8_t blinkRate, int8_t slideRate, const char *text, uint8_t version)
 {
 	Message msg(SetText, version);
 	msg.setPassword(password);
@@ -326,7 +326,7 @@ Message Message::createGenericResponse(uint8_t responseCode, uint8_t version)
 	return msg;
 }
 
-Message Message::createGetTextResponse(uint8_t blinkRate, uint8_t slideRate, const char *text, uint8_t version)
+Message Message::createGetTextResponse(uint8_t blinkRate, int8_t slideRate, const char *text, uint8_t version)
 {
 	Message msg(GetTextResponse, version);
 	msg.setBlinkRate(blinkRate);
