@@ -14,6 +14,14 @@ public:
 	static constexpr uint8_t WIFI_SSID_SIZE = 32;
 	static constexpr uint8_t WIFI_PASSWORD_SIZE = 64;
 
+	// Estas constantes públicas definen el rango de las variables de la
+	// velocidad de desplazamiento y frecuencia de parpadeo.
+	static const float BLINK_RATE_RESOLUTION;
+	static const float SLIDE_RATE_RESOLUTION;
+	static const float MAX_SLIDE_RATE;
+	static const float MIN_SLIDE_RATE;
+	static const float MAX_BLINK_RATE;
+
 	// Type viene determinado por un enumerativo cuyo valor
 	// representa el tipo de mensaje.
 	enum Type {
@@ -54,13 +62,13 @@ public:
 	static Message createAuthRequest(const char *password, uint8_t version = SUPPORTED_PROTOCOL_VERSION);
 	static Message createSetPasswordRequest(const char *password, const char *newPassword, uint8_t version = SUPPORTED_PROTOCOL_VERSION);
 	static Message createGetTextRequest(const char *password, uint8_t version = SUPPORTED_PROTOCOL_VERSION);
-	static Message createSetTextRequest(const char *password, uint8_t blinkRate, int8_t slideRate, const char *text, uint8_t version = SUPPORTED_PROTOCOL_VERSION);
+	static Message createSetTextRequest(const char *password, float blinkRate, float slideRate, const char *text, uint8_t version = SUPPORTED_PROTOCOL_VERSION);
 	static Message createGetWifiConfigRequest(const char *password, uint8_t version = SUPPORTED_PROTOCOL_VERSION);
 	static Message createSetWifiConfigRequest(const char *password, const char *ssid, const char *wifiPassword, uint32_t ip, uint32_t mask, uint8_t version = SUPPORTED_PROTOCOL_VERSION);
 
 	// Responses
 	static Message createGenericResponse(uint8_t responseCode, uint8_t version = SUPPORTED_PROTOCOL_VERSION);
-	static Message createGetTextResponse(uint8_t blinkRate, int8_t slideRate, const char *text, uint8_t version = SUPPORTED_PROTOCOL_VERSION);
+	static Message createGetTextResponse(float blinkRate, float slideRate, const char *text, uint8_t version = SUPPORTED_PROTOCOL_VERSION);
 	static Message createGetWiFiConfigResponse(const char *ssid, const char *wifiPassword, uint32_t ip, uint32_t mask, uint8_t version = SUPPORTED_PROTOCOL_VERSION);
 
 	// El parámetro rawData debe ser del tamaño del paquete. Si no, el
@@ -84,8 +92,8 @@ public:
 	Type          type()         const;
 	const char *  password()     const;
 	const char *  newPassword()  const;
-	uint8_t       blinkRate()    const;
-	int8_t        slideRate()    const;
+	float         blinkRate()    const;
+	float         slideRate()    const;
 	const char *  text()         const;
 	const char *  wifiSSID()     const;
 	const char *  wifiPassword() const;
@@ -105,8 +113,8 @@ private:
 	// campo. Si no se puede, el comportamiento es indefinido.
 	void setPassword(const char *password);
 	void setNewPassword(const char *newPassword);
-	void setBlinkRate(uint8_t brate);
-	void setSlideRate(int8_t srate);
+	void setBlinkRate(float brate);
+	void setSlideRate(float srate);
 	void setText(const char *text);
 	void setWiFiSSID(const char *ssid);
 	void setWiFiPassword(const char *password);
